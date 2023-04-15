@@ -1,0 +1,42 @@
+<div class="childs-overlayed">
+  <img src="https://via.placeholder.com/100">
+  <div class="cooldown"></div>
+</div>
+
+.cooldown {
+  /* set via style.setProperty('--cooldown', '23.4%') in js */
+--cooldown: 50%;
+              background: conic-gradient(
+transparent 0,
+transparent var(--cooldown),
+rgba(0, 0, 0, 0.5) var(--cooldown),
+rgba(0, 0, 0, 0.5)
+);
+animation: cooldown 1s linear infinite;
+}
+
+/* makes --cooldown animateable for css animations */
+@property --cooldown {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 0%;
+}
+
+@keyframes cooldown {
+  0% { --cooldown: 0%; }
+  100% { --cooldown: 100%; }
+}
+
+/* makes children be over each other */
+.childs-overlayed {
+  height: 100px;
+  width: 100px;
+  border: 2px solid black;
+  display: grid;
+  grid-template-areas: "only";
+}
+.childs-overlayed > * {
+  grid-area: only;
+  height: 100%;
+  width: 100%;
+}

@@ -1,0 +1,197 @@
+@import "bulma/bulma";
+@import "fontawesome/fontawesome";
+@import "fontawesome/brands";
+@import "fontawesome/solid";
+
+
+:root {
+  --blur:0px;
+  --contrast:100%;
+  --brightness:100%;
+  --grayscale:0%;
+  --hue-rotate:0deg;
+  --invert:0%;
+  --opacity:100%;
+  --saturate:100%;
+  --sepia:0%;
+}
+
+.spell-icon {
+  @extend .button;
+  @extend .is-dark;
+  @extend .has-text-weight-bold;
+
+  filter:
+    #{"blur(var(--blur))"}
+    #{"brightness(var(--brightness))"}
+    #{"contrast(var(--contrast))"}
+    #{"grayscale(var(--grayscale))"}
+    #{"hue-rotate(var(--hue-rotate))"}
+    #{"invert(var(--invert))"}
+    #{"opacity(var(--opacity))"}
+    #{"saturate(var(--saturate))"}
+    #{"sepia(var(--sepia))"};
+
+  text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  border-color: #000;
+  width: 48px;
+  height: 32px;
+  transition-duration: 0.1s;
+  margin: 1px;
+}
+
+.spell-icon.assigned:hover {
+  --brightness: 125%;
+  border-color: #333;
+}
+
+.spell-icon.not-assignable:hover, .spell-icon.not-assignable.assigned {
+  border-color: #f00;
+  border-width: medium;
+}
+
+.spell-icon.darkened {
+  --grayscale: 100%;
+  --brightness: 80%;
+}
+
+.spell-icon.darkened:hover {
+  --brightness: 100%;
+  border-color: #333;
+}
+
+.spell-icon.transparent {
+  border-color: #fff;
+  opacity: 50%;
+  /*transition-duration: 0.5s;*/
+  transition-duration: 0s;
+}
+
+.spell-icon.transparent:hover {
+  opacity: 75%;
+  transition-duration: 0.1s;
+}
+
+.spell-icon.invisible {
+  opacity: 5%;
+  --blur: 1px;
+  --contrast: 300%;
+  --grayscale: 100%;
+  --brightness: 70%;
+}
+
+.spell-icon.invisible:hover {
+  opacity: 20%;
+  --blur: 1px;
+  --contrast: unset;
+  --grayscale: unset;
+  --brightness: unset;
+}
+
+.flat-planner {
+  display: grid;
+
+  .character-names {
+    .character-name-outer {
+      position: relative;
+      height: 3ex;
+
+      .character-name-inner {
+        position: absolute;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+  }
+}
+
+.planner {
+  @extend .table;
+  @extend .is-hoverable;
+  @extend .has-text-centered;
+  /*white-space: nowrap;*/
+
+  th {
+    @extend .has-text-centered;
+  }
+
+  td {
+    @extend .has-text-centered;
+    border-left-color: $border-light;
+    border-left-width: 1px;
+    border-right-color: $border-light;
+    border-right-width: 1px;
+  }
+
+  .spell-toggles {
+  }
+
+  .spell-assignments {
+  }
+}
+
+/* LEFT STICKY VERSION */
+/*
+table {
+  white-space: nowrap;
+}
+
+table thead th {
+  z-index: 1;
+  background: white;
+}
+
+table thead th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+}
+table tbody th {
+  position: sticky;
+  left: 0;
+  background: white;
+  z-index: 1;
+}
+ */
+/* END OF LEFT STICKY VERSION */
+
+
+/* DOUBLE STICKY VERSION
+.scrollable-table-container {
+  overflow-x: auto;
+  height: calc(100vh - 3.25rem);
+}
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden
+}
+
+table {
+  white-space: nowrap;
+}
+
+table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: white;
+}
+
+table thead th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+}
+table tbody th {
+  position: sticky;
+  left: 0;
+  background: white;
+  z-index: 1;
+}
+ */

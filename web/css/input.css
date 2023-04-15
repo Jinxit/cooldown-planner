@@ -1,0 +1,17 @@
+@import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@300&display=swap');
+@import "fontawesome/all.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@tailwind variants;
+
+@layer components {
+    .fade-to-b-1200 {
+        mask-image: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0) 1200px);
+    }
+
+    .fade-to-b-4rem {
+        mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 4rem, rgba(0,0,0,0.05) 10rem);
+    }
+}

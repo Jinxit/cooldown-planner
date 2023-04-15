@@ -1,0 +1,18 @@
+[package]
+name = "optimize-worker"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+fight-domain = { path = "../../fight-domain" }
+optimizer = { path = "../../optimizer" }
+leptos_workers = { path = "../../../leptos_workers/leptos_workers" }
+
+futures = "0.3"
+localsearch = "0.9"
+ordered-float = "3.7"
+serde = { version = "1.0", features = ["derive"] }
+wasm-bindgen = { workspace = true }

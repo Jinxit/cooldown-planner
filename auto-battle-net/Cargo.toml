@@ -1,0 +1,42 @@
+[package]
+name = "auto-battle-net"
+version = "0.1.0"
+edition = "2021"
+build = "build/main.rs"
+
+[features]
+default = []
+reqwest = ["dep:reqwest", "dep:cached"]
+
+[dependencies]
+base64 = "0.21"
+cached = { version = "0.44", optional = true }
+governor = "0.6"
+http = "0.2"
+lazy_static = "1.4"
+ordered-float = { version = "3.7", features = ["serde"] }
+reqwest = { version = "0.11", features = ["blocking", "json"], optional = true }
+serde = { version = "1.0", features = ["derive", "rc"] }
+serde-lite = { version = "0.4" }
+serde-lite-derive = { version = "0.4" }
+serde_json = "1.0"
+serde_with = "3.0"
+strum = "0.25"
+strum_macros = "0.25"
+thiserror = "1.0"
+tracing = "0.1.37"
+url = "2.3"
+urlencoding = "2.1"
+
+[build-dependencies]
+base64 = "0.21"
+convert_case = "0.6"
+dotenvy = "0.15"
+governor = "0.6"
+html2md = "0.2.14"
+itertools = "0.11"
+lazy_static = "1.4"
+reqwest = { version = "0.11", features = ["blocking", "json"] }
+serde = { version = "1.0", features = ["derive", "rc"] }
+serde_json = "1.0"
+tokio = { version = "1.32", features = ["rt", "macros"] }

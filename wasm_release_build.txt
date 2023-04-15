@@ -1,0 +1,10 @@
+https://github.com/leptos-rs/leptos-website/blob/303080f79f3707b3cc9e086cc1f1be201fb7bb23/Cargo.toml#L82
+[profile.wasm-release]
+inherits = "release"
+lto = true
+opt-level = 'z'
+codegen-units = 1
+
+
+https://github.com/leptos-rs/leptos-website/blob/303080f79f3707b3cc9e086cc1f1be201fb7bb23/Cargo.toml#L135
+lib-profile-release = "wasm-release"
