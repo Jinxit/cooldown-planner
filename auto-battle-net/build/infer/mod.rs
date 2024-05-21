@@ -53,7 +53,7 @@ fn recursively_insert_structs(current: &mut Struct, structs: &mut Vec<Struct>) {
         .iter_mut()
         .find(|s| !s.fields.is_empty() && s.fields == current.fields && s.path == current.path);
     if let Some(other) = structurally_same {
-        current.name = other.name.clone();
+        current.name.clone_from(&other.name);
     } else {
         let name = (1..)
             .map(|i| {

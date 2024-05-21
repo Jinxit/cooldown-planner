@@ -14,7 +14,6 @@ use auto_battle_net::oauth::user_authentication::user_info::UserInfoRequest;
 use auto_battle_net::{
     BattleNetClientAsync, Locale, Namespace, NamespaceCategory, Region, ReqwestBattleNetClient,
 };
-use axum::body::{Body as AxumBody, StreamBody};
 use axum::error_handling::HandleErrorLayer;
 use axum::extract::{FromRequestParts, Path, Query, RawQuery, State};
 use axum::middleware::from_fn;
@@ -28,8 +27,8 @@ use handlers::*;
 use http::header::{ACCEPT, ACCEPT_ENCODING, AUTHORIZATION, CACHE_CONTROL, CONTENT_TYPE, ORIGIN};
 use http::request::Parts;
 use http::{HeaderMap, HeaderName, HeaderValue, Method, Request, StatusCode};
-use hyper::Body;
-use leptos::{get_configuration, provide_context, view, LeptosOptions};
+use leptos::prelude::*;
+use leptos_meta::MetaTags;
 use leptos_axum::{
     generate_route_list, handle_server_fns, handle_server_fns_with_context, LeptosRoutes,
 };
@@ -44,6 +43,7 @@ use paseto_sessions::{session_middleware, Session};
 use reverse_proxy::*;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
+use tokio::net::TcpListener;
 use std::any::TypeId;
 use std::convert::Infallible;
 use std::env::var;
@@ -77,11 +77,12 @@ async fn main() {
     }
     dotenvy::dotenv().unwrap();
 
+
     // Setting this to None means we'll be using cargo-leptos and its env vars
     let conf = get_configuration(None).await.unwrap();
     let leptos_options = conf.leptos_options;
     let addr = leptos_options.site_addr;
-    let routes = generate_route_list(|| view! {  <App/> }).await;
+    let routes = generate_route_list(App);
 
     let _cors_layer = CorsLayer::new()
         .allow_headers(vec![
@@ -107,11 +108,31 @@ async fn main() {
         .route("/bnet/login-callback", any(battle_net_login_callback))
         .route("/spell_icon/:spell_id", get(spell_icon))
         .route("/icon/:icon", get(icon))
-        .leptos_routes(&leptos_options, routes, || view! {  <App /> })
+        .leptos_routes(&leptos_options, routes, {
+            let leptos_options = leptos_options.clone();
+            move || view! {
+                <!DOCTYPE html> 
+                <html lang="en" class="bg-slate-700 text-gray-300 selection:bg-slate-700">
+                    <head>
+                        <meta charset="utf-8"/>
+                        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                        // required to load JS/WASM for client-side interactivity
+                        <HydrationScripts options=leptos_options.clone()/>
+                        // optional: can be toggled to include/exclude cargo-leptos live-reloading code
+                        // <AutoReload options=leptos_options.clone()/>
+                        // required if using leptos_meta
+                        <MetaTags/>
+                    </head>
+                    <body>
+                        <App/>
+                    </body>
+                </html>
+            }
+        })
         .fallback(file_and_error_handler)
         //.layer(cors_layer)
         //.layer(CompressionLayer::new().gzip(true).deflate(true))
-        .layer(from_fn(session_middleware::<CooldownPlannerSession, _>))
+        .layer(from_fn(session_middleware::<CooldownPlannerSession>))
         //.layer(SetResponseHeaderLayer::appending(HeaderName::from_lowercase(b"cross-origin-opener-policy").unwrap(), HeaderValue::from_static("same-origin")))
         //.layer(SetResponseHeaderLayer::appending(HeaderName::from_lowercase(b"cross-origin-embedder-policy").unwrap(), HeaderValue::from_static("credentialless")))
         .with_store(SqLiteConnection::new("sqlite://target/storage.sqlite").await.unwrap())
@@ -131,8 +152,8 @@ async fn main() {
     #[cfg(not(feature = "lambda"))]
     {
         info!("listening on http://{}", &addr);
-        axum::Server::bind(&addr)
-            .serve(app.into_make_service_with_connect_info::<SocketAddr>())
+        let listener = TcpListener::bind(&addr).await.unwrap();
+        axum::serve(listener, app.into_make_service())
             .await
             .unwrap();
     }

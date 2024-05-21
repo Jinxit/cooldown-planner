@@ -1,5 +1,5 @@
 #![allow(incomplete_features)]
-#![feature(async_fn_in_trait)]
+#![allow(async_fn_in_trait)]
 #![allow(clippy::module_inception)]
 
 include!(concat!(env!("OUT_DIR"), "/mod.rs"));

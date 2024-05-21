@@ -9,12 +9,12 @@ use auto_battle_net::Region;
 use auto_battle_net::{BattleNetClientAsync, LocalizedString};
 //use cached::proc_macro::cached;
 use fight_domain::{Attack, Lookup};
-use leptos::{server, ServerFnError};
-use leptos::{IntoView, Signal, View};
+use leptos::prelude::*;
 use tracing::instrument;
+use leptos::server_fn::codec::{GetUrl, Json, Cbor};
 
 #[instrument]
-#[server(InstanceInfo, "/bnet", "GetCbor")]
+#[server(prefix = "/bnet", input = GetUrl, output = Json)]
 pub async fn instance_info(instance_id: i64) -> Result<JournalInstanceResponse, ServerFnError> {
     use crate::serverfns::util::get_bnet_client_regionless;
 

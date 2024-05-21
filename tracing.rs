@@ -1,4 +1,4 @@
-use leptos::*;
+use leptos::prelude::*;
 use tracing_subscriber::{fmt, util::SubscriberInitExt};
 use tracing_subscriber_wasm::MakeConsoleWriter;
 
@@ -22,7 +22,7 @@ fn main() {
 
 #[component]
 pub fn App(cx: Scope) -> impl IntoView {
-    let (count, set_count) = create_signal(cx, 0);
+    let (count, set_count) = signal(cx, 0);
     view! { cx,
         <button on:click=move |_| {
             tracing::debug!("clicked button");

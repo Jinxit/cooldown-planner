@@ -1,25 +1,19 @@
 use std::collections::{HashMap, HashSet};
-use std::sync::Arc;
 
-use crate::api::ui_assignment::UiAssignmentState;
+use itertools::Itertools;
+use leptos::prelude::*;
+
+use auto_battle_net::LocalizedString;
+use fight_domain::{Attack, AttackUuid, Character, CharacterUuid, Lookup, Spell, SpellUuid};
+use optimizer::{Assignment, AssignmentState, AssignmentUuid};
+
+use crate::{components::*, localization};
 use crate::api::ui_character::{UiCharacter, UiCharacterTemplate};
 use crate::api::ui_fight::UiFight;
-use crate::api::use_optimizer;
-use crate::{components::*, localization};
-use crate::localization::{encounter, preferences};
 use crate::misc::flatten_ok::FlattenOk;
 use crate::misc::localized_string_with_context::LocalizedStringWithContext;
-use crate::reactive::map::Map;
-use auto_battle_net::LocalizedString;
-use fight_domain::{
-    Attack, AttackUuid, Character, CharacterUuid, Lookup, LookupKey, Spell, SpellUuid,
-};
-use itertools::Itertools;
-use leptos::*;
-use optimizer::{Assignment, AssignmentUuid};
 
 use super::ui_assignment::UiAssignment;
-use super::ui_spell::UiSpell;
 
 #[derive(Copy, Clone)]
 struct MutableUiState {
@@ -45,29 +39,34 @@ pub struct UiState {
 impl UiState {
     pub fn new() -> Self {
         let ui_state = MutableUiState {
-            ui_characters: create_rw_signal(Lookup::default()),
-            general_character: create_rw_signal(UiCharacter::new(
+            ui_characters: RwSignal::new(Lookup::default()),
+            general_character: RwSignal::new(UiCharacter::new(
                 CharacterUuid::new(),
                 UiCharacterTemplate::new_general(),
                 true,
             )),
-            suggested_assignments: create_rw_signal(Lookup::default()),
-            planning: create_rw_signal(false),
-            selected_fight_index: create_rw_signal(0),
+            suggested_assignments: RwSignal::new(Lookup::default()),
+            planning: RwSignal::new(false),
+            selected_fight_index: RwSignal::new(0),
         };
 
-        create_effect(move |_| {
+        Effect::new(move |_| {
             let general_name = localization::general().localize().to_string();
             ui_state.general_character.update(|general_character| {
                 general_character.name = Some(general_name);
             });
         });
 
-        let fights = fights::mythic_aberrus();
-        let selected_fight =
-            Signal::derive(move || fights().get(ui_state.selected_fight_index.get()).cloned());
+        let fights = Signal::derive(move || fights::mythic_aberrus().get());
+        let selected_fight = Signal::derive(move || {
+            fights
+                .get()
+                .get(ui_state.selected_fight_index.get())
+                .cloned()
+        });
         let attacks = Signal::derive(move || {
-            selected_fight()
+            selected_fight
+                .get()
                 .map(|f| f.attacks.get().clone())
                 .unwrap_or_default()
         });
@@ -111,19 +110,19 @@ impl UiState {
                 .into_iter()
                 .filter(|c| c.name.is_some())
                 .flat_map(|c| c.assignments.into_iter())
-                .filter(|a| a.state == UiAssignmentState::Forced)
+                .filter(|a| a.state == AssignmentState::Forced)
                 .map(|a| Assignment {
                     uuid: a.uuid,
                     character: a.character,
                     spell: a.spell,
                     attack: a.attack,
-                    forced: true,
+                    state: a.state,
                 })
                 .collect()
         });
         let all_assignments = Signal::derive(move || {
+            let attacks = attacks.get();
             ui_characters.with(|ui_characters| {
-                let attacks = attacks();
                 let base = ui_characters
                     .iter()
                     .filter(|c| c.name.is_some())
@@ -134,7 +133,7 @@ impl UiState {
                                 character: c.uuid,
                                 spell: s.uuid,
                                 attack: a.uuid,
-                                state: UiAssignmentState::Unassigned,
+                                state: AssignmentState::Unassigned,
                             })
                         })
                     });
@@ -201,17 +200,20 @@ impl UiState {
                     character: a.character,
                     spell: a.spell,
                     attack: a.attack,
-                    state: UiAssignmentState::Suggested,
+                    state: AssignmentState::Suggested,
                 })
-                .collect(),
+                .collect::<Lookup<_>>(),
         )
     }
 
     pub fn toggle_assignment(&self, assignment: &UiAssignment) {
         self.ui_state.ui_characters.update(|ui_characters| {
-            let ui_character = ui_characters.get_mut(&assignment.character).unwrap();
-            match (assignment.state, self.is_spell_assignable(assignment)) {
-                (UiAssignmentState::Forced, _) => {
+            let mut ui_character = ui_characters.get_mut(assignment.character).unwrap();
+            match (
+                assignment.state,
+                self.is_spell_assignable(assignment.clone()),
+            ) {
+                (AssignmentState::Forced, _) => {
                     // remove currently forced assignment
                     ui_character.assignments.take(&assignment.uuid);
                 }
@@ -219,26 +221,70 @@ impl UiState {
                     // create new forced assignment
                     ui_character.assignments.put(assignment.clone());
                 }
-                (current, false) => {
+                (_, false) => {
                     // do nothing
                 }
             };
         })
     }
 
-    pub fn is_spell_assignable(&self, assignment: &UiAssignment) -> bool {
+    pub fn lock_suggestions(&self) {
+        self.ui_state.ui_characters.update(|ui_characters| {
+            for ui_character in ui_characters.iter_mut() {
+                for assignment in ui_character.assignments.iter_mut() {
+                    if assignment.state == AssignmentState::Suggested {
+                        assignment.state = AssignmentState::Forced;
+                    }
+                }
+            }
+        })
+    }
+
+    pub fn set_ui_character_editing(&self, uuid: CharacterUuid, editing: bool) {
+        self.ui_state.ui_characters.update(|ui_characters| {
+            ui_characters.get_mut(uuid).unwrap().editing = editing;
+        })
+    }
+
+    pub fn set_ui_character_class(&self, uuid: CharacterUuid, class: Option<LocalizedString>) {
+        self.ui_state.ui_characters.update(|ui_characters| {
+            ui_characters.get_mut(uuid).unwrap().class = class;
+        })
+    }
+
+    pub fn set_ui_character_spec(&self, uuid: CharacterUuid, spec: Option<LocalizedString>) {
+        self.ui_state.ui_characters.update(|ui_characters| {
+            ui_characters.get_mut(uuid).unwrap().spec = spec;
+        })
+    }
+
+    pub fn toggle_spell_enabled(&self, character: CharacterUuid, spell: SpellUuid) {
+        self.ui_state.ui_characters.update(|ui_characters| {
+            let mut character = ui_characters.get_mut(character).unwrap();
+            let mut spell = character.spells.get_mut(spell).unwrap();
+            spell.enabled = !spell.enabled;
+        })
+    }
+
+    pub fn set_selected_fight_index(&self, index: usize) {
+        self.ui_state.selected_fight_index.set(index)
+    }
+
+    // TODO: consider changing this to be AsyncDerived
+    pub fn is_spell_assignable(&self, assignment: UiAssignment) -> bool {
+        let ui_characters = self.ui_characters();
+        let attacks = self.attacks();
+        let locked_assignments = self.locked_assignments();
+
         let character_uuid = assignment.character;
         let attack_uuid = assignment.attack;
         let spell_uuid = assignment.spell;
 
-        let ui_characters = self.ui_characters();
         let spells = &ui_characters.get(&character_uuid).unwrap().spells;
         let spell = spells.get(&spell_uuid).unwrap();
-        let attacks = self.attacks();
         let attack = &attacks.get(&attack_uuid).unwrap();
 
-        let forced_assignments_for_character = self
-            .locked_assignments()
+        let forced_assignments_for_character = locked_assignments
             .into_iter()
             .filter(|a| {
                 a.character != character_uuid && a.attack != attack_uuid && a.spell != spell_uuid
@@ -282,13 +328,7 @@ impl UiState {
         let other_usages_within_cooldown = other_usages
             .iter()
             .filter(|other_usage| {
-                let other_timer = self
-                    .attacks
-                    .get()
-                    .get(&other_usage.attack)
-                    .unwrap()
-                    .timer
-                    .clone();
+                let other_timer = attacks.get(&other_usage.attack).unwrap().timer.clone();
                 other_timer.static_timer().abs_diff(attack_timer) <= spell.cooldown
             })
             .count();
@@ -300,66 +340,30 @@ impl UiState {
         true
     }
 
-    pub fn lock_suggestions(&self) {
-        self.ui_state.ui_characters.update(|ui_characters| {
-            for ui_character in ui_characters.iter_mut() {
-                for assignment in ui_character.assignments.iter_mut() {
-                    if assignment.state == UiAssignmentState::Suggested {
-                        assignment.state = UiAssignmentState::Forced;
-                    }
-                }
-            }
-        })
-    }
-
-    pub fn set_ui_character_editing(&self, uuid: CharacterUuid, editing: bool) {
-        self.ui_state.ui_characters.update(|ui_characters| {
-            ui_characters.get_mut(&uuid).unwrap().editing = editing;
-        })
-    }
-
-    pub fn set_ui_character_class(&self, uuid: CharacterUuid, class: Option<LocalizedString>) {
-        self.ui_state.ui_characters.update(|ui_characters| {
-            ui_characters.get_mut(&uuid).unwrap().class = class;
-        })
-    }
-
-    pub fn set_ui_character_spec(&self, uuid: CharacterUuid, spec: Option<LocalizedString>) {
-        self.ui_state.ui_characters.update(|ui_characters| {
-            ui_characters.get_mut(&uuid).unwrap().spec = spec;
-        })
-    }
-
-    pub fn toggle_spell_enabled(&self, character: CharacterUuid, spell: SpellUuid) {
-        self.ui_state.ui_characters.update(|ui_characters| {
-            let spell = ui_characters
-                .get_mut(&character)
-                .unwrap()
-                .spells
-                .get_mut(&spell)
-                .unwrap();
-            spell.enabled = !spell.enabled;
-        })
-    }
-
-    pub fn set_selected_fight_index(&self, index: usize) {
-        self.ui_state.selected_fight_index.set(index)
-    }
-
-    pub fn ui_character_editing(&self, uuid: CharacterUuid) -> bool {
-        self.ui_characters().get(&uuid).unwrap().editing
-    }
-
-    pub fn locked_assignments(&self) -> Lookup<Assignment> {
-        self.locked_assignments.get()
-    }
-
+    // TODO: consider changing the below to be AsyncDerived rather than auto-getting and defaulting
     pub fn all_assignments(&self) -> HashMap<(CharacterUuid, AttackUuid), Lookup<UiAssignment>> {
         self.all_assignments.get()
     }
 
     pub fn attacks(&self) -> Lookup<Attack> {
         self.attacks.get()
+    }
+
+    pub fn selected_fight(&self) -> Option<UiFight> {
+        self.selected_fight.get()
+    }
+
+    pub fn fights(&self) -> Vec<UiFight> {
+        self.fights.get()
+    }
+
+    // TODO: consider changing the below to be Signals rather than auto-getting
+    pub fn locked_assignments(&self) -> Lookup<Assignment> {
+        self.locked_assignments.get()
+    }
+
+    pub fn ui_character_editing(&self, uuid: CharacterUuid) -> bool {
+        self.ui_characters().get(&uuid).unwrap().editing
     }
 
     pub fn ui_characters(&self) -> Lookup<UiCharacter> {
@@ -370,16 +374,8 @@ impl UiState {
         self.characters.get()
     }
 
-    pub fn selected_fight(&self) -> Option<UiFight> {
-        self.selected_fight.get()
-    }
-
     pub fn selected_fight_index(&self) -> usize {
         self.ui_state.selected_fight_index.get()
-    }
-
-    pub fn fights(&self) -> Vec<UiFight> {
-        self.fights.get()
     }
 
     pub fn planning(&self) -> bool {

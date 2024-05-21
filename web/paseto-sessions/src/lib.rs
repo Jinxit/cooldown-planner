@@ -1,40 +1,29 @@
 #![allow(clippy::arc_with_non_send_sync)]
 
-use axum::middleware::Next;
-use axum::response::IntoResponse;
-use axum::{headers, TypedHeader};
-use cookie::{CookieBuilder, SameSite};
 use core::convert::TryFrom;
-use http::{HeaderValue, Request};
 use std::env::var;
-
-use pasetors::claims::{Claims, ClaimsValidationRules};
-
-use pasetors::keys::SymmetricKey;
-
-use pasetors::token::UntrustedToken;
-use pasetors::{local, version4::V4, Local};
-use serde::de::DeserializeOwned;
-use serde::Serialize;
 use std::fmt::Debug;
 use std::ops::{Deref, DerefMut};
 use std::sync::{Arc, RwLock};
 use std::time::{Duration, SystemTime};
+
+use axum::middleware::Next;
+use axum::response::IntoResponse;
+use axum_extra::{headers, TypedHeader};
+use cookie::{CookieBuilder, SameSite};
+use http::{HeaderValue, Request};
+use pasetors::{local, Local, version4::V4};
+use pasetors::claims::{Claims, ClaimsValidationRules};
+use pasetors::keys::SymmetricKey;
+use pasetors::token::UntrustedToken;
+use serde::de::DeserializeOwned;
+use serde::Serialize;
 use tracing::warn;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Session<T> {
     data: Arc<RwLock<T>>,
     original_data: Arc<RwLock<T>>,
-}
-
-impl<T> Clone for Session<T> {
-    fn clone(&self) -> Self {
-        Self {
-            data: self.data.clone(),
-            original_data: self.original_data.clone(),
-        }
-    }
 }
 
 impl<T> Session<T>
@@ -74,10 +63,10 @@ impl<T> Session<T> {
     }
 }
 
-pub async fn session_middleware<T, B>(
+pub async fn session_middleware<T>(
     TypedHeader(cookie): TypedHeader<headers::Cookie>,
-    mut request: Request<B>,
-    next: Next<B>,
+    mut request: Request<axum::body::Body>,
+    next: Next,
 ) -> impl IntoResponse
 where
     T: Debug + Default + Eq + Clone + Serialize + DeserializeOwned + Send + Sync + 'static,

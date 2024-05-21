@@ -1,62 +1,50 @@
 use fight_domain::{Lookup, LookupKey};
-use leptos::*;
+use leptos::prelude::*;
 use memo::Memoize;
 use std::fmt::Debug;
 use std::hash::Hash;
 
-pub mod blank_suspense;
-pub mod map;
+pub mod async_ext;
 pub mod memo;
-pub mod resource_ext;
 
 #[component]
 pub fn ForEach<IF, I, T, EF, N>(each: IF, children: EF) -> impl IntoView
 where
-    IF: Fn() -> I + 'static,
-    I: IntoIterator<Item = T>,
-    EF: Fn(T) -> N + 'static,
-    N: IntoView + 'static,
-    T: Clone + Eq + Hash + 'static,
+    IF: Fn() -> I + Send + 'static,
+    I: IntoIterator<Item = T> + Send + 'static,
+    EF: Fn(T) -> N + Clone + Send + 'static,
+    N: IntoView + Send + 'static,
+    T: Clone + Eq + Hash + Send + 'static,
 {
-    view! {
-        <For
-            each
-            key=move |value| value.clone()
-            view=move |value| { children(value) }
-        />
-    }
+    view! { <For each key=move |value| value.clone() children=move |value| { children(value) }/> }
 }
 
 #[component]
-pub fn ForLookup5<T, F>(#[prop(into)] lookup: Signal<Lookup<T>>, children: F) -> impl IntoView
+pub fn ForLookup5<T, F, N>(#[prop(into)] lookup: Signal<Lookup<T>>, children: F) -> impl IntoView
 where
-    T: Clone + PartialEq + LookupKey + 'static,
-    F: Fn(T) -> Fragment + Clone + 'static,
-    T::Key: Eq + Hash + 'static,
+    T: Clone + PartialEq + LookupKey + Send + Sync + 'static,
+    F: Fn(T) -> N + Clone + Send + 'static,
+    N: IntoView + Send + 'static,
+    T::Key: Eq + Hash + Send + Sync + 'static,
 {
     view! {
         <For
-            clone:children
             each=lookup
             key=move |value| value.lookup_key().clone()
-            view=move | value| { children( value) }
+            children=move |value| { children(value) }
         />
     }
 }
 
 #[component]
-pub fn ForLookup6<T, F>(#[prop(into)] lookup: Signal<Lookup<T>>, children: F) -> impl IntoView
+pub fn ForLookup6<T, F, N>(#[prop(into)] lookup: Signal<Lookup<T>>, children: F) -> impl IntoView
 where
-    T: Clone + PartialEq + Hash + Eq + LookupKey + 'static,
-    F: Fn(T) -> Fragment + Clone + 'static,
-    T::Key: Eq + Hash + 'static,
+    T: Clone + PartialEq + Hash + Eq + LookupKey + Send + Sync + 'static,
+    F: Fn(T) -> N + Clone + Send + 'static,
+    N: IntoView + Send + 'static,
+    T::Key: Eq + Hash + Send + Sync + 'static,
 {
     view! {
-        <For
-            clone:children
-            each=lookup
-            key=move |value| value.clone()
-            view=move | value| { children( value) }
-        />
+        <For each=lookup key=move |value| value.clone() children=move |value| { children(value) }/>
     }
 }

@@ -2,15 +2,18 @@ extern crate alloc;
 extern crate core;
 
 use alloc::rc::Rc;
-use fight_domain::{Attack, Character, Lookup};
+use std::cell::RefCell;
+use std::sync::Arc;
+use std::time::Duration;
+
 use leptos_workers::worker;
 use localsearch::optim::RelativeAnnealingOptimizer;
 use localsearch::OptProgress;
-use optimizer::{Assignment, FightModel, Optimizer, Plan};
 use ordered_float::{Float, NotNan};
 use serde::{Deserialize, Serialize};
-use std::cell::RefCell;
-use std::sync::Arc;
+
+use fight_domain::{Attack, Character, Lookup};
+use optimizer::{Assignment, FightModel, Optimizer, Plan};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct OptimizeRequest {
@@ -137,6 +140,7 @@ pub fn optimize(
     let model = FightModel { score_function };
 
     let iterations = 1000;
+    let time_limit = Duration::from_secs(10);
 
     let (plan, score) = (0..10)
         .map(|_| {
@@ -144,9 +148,10 @@ pub fn optimize(
                 &model,
                 Some(initial_plan.clone()),
                 iterations,
+                time_limit,
                 Some(&|status: OptProgress<Plan, NotNan<f64>>| {
                     callback(
-                        status.state.borrow().assignments.clone(),
+                        status.solution.borrow().assignments.clone(),
                         -status.score.into_inner(),
                     );
                 }),

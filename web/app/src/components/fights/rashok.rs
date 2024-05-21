@@ -9,8 +9,7 @@ use fight_domain::{
     Lookup, TimeStep,
 };
 use itertools::Itertools;
-use leptos::*;
-use leptos::{component, IntoSignal, RwSignal, Signal, SignalGet};
+use leptos::prelude::*;
 use num_traits::{One, Zero};
 use ordered_float::NotNan;
 use std::time::Duration;
@@ -23,7 +22,7 @@ pub fn mythic(
         instance_info,
         encounter_info,
         Difficulty::Mythic,
-        |props| view! {  () },
+        |props| view! { () },
         rashok_attacks,
         "boss/rashok.png",
         29,
@@ -33,8 +32,7 @@ pub fn mythic(
 #[component]
 fn RashokParameters(_props: ()) -> impl IntoView {
     view! {
-        <div class="flex h-full w-full flex-wrap content-start gap-2 overflow-hidden p-2 transition-all">
-        </div>
+        <div class="flex h-full w-full flex-wrap content-start gap-2 overflow-hidden p-2 transition-all"></div>
     }
 }
 

@@ -1,9 +1,12 @@
+use std::time::Duration;
+
 use localsearch;
+use localsearch::{OptCallbackFn, OptModel};
 pub use localsearch::optim::EpsilonGreedyOptimizer;
 pub use localsearch::optim::HillClimbingOptimizer;
+use localsearch::optim::LocalSearchOptimizer;
 pub use localsearch::optim::LogisticAnnealingOptimizer;
 pub use localsearch::optim::RelativeAnnealingOptimizer;
-use localsearch::{OptCallbackFn, OptModel};
 use ordered_float::NotNan;
 
 pub struct SimulatedAnnealingOptimizer {
@@ -42,21 +45,23 @@ impl SimulatedAnnealingOptimizer {
     pub fn optimize<M, F>(
         &self,
         model: &M,
-        initial_state: Option<M::StateType>,
+        initial_state: Option<M::SolutionType>,
         n_iter: usize,
+        time_limit: Duration,
         callback: Option<&F>,
-    ) -> (M::StateType, M::ScoreType)
+    ) -> (M::SolutionType, M::ScoreType)
     where
         M: OptModel<ScoreType = NotNan<f64>> + Sync + Send,
-        F: OptCallbackFn<M::StateType, M::ScoreType>,
+        F: OptCallbackFn<M::SolutionType, M::ScoreType>,
     {
-        self.optimizer.optimize(
+        let result = self.optimizer.optimize(
             model,
             initial_state,
             n_iter,
-            self.max_temperature,
-            self.min_temperature,
+            time_limit,
             callback,
-        )
+            (self.max_temperature, self.min_temperature),
+        );
+        (result.0, result.1)
     }
 }

@@ -9,8 +9,7 @@ use fight_domain::{
     Lookup, TimeStep,
 };
 use itertools::Itertools;
-use leptos::*;
-use leptos::{component, IntoSignal, RwSignal, Signal, SignalGet};
+use leptos::prelude::*;
 use num_traits::{One, Zero};
 use ordered_float::NotNan;
 use std::time::Duration;
@@ -23,7 +22,7 @@ pub fn mythic(
         instance_info,
         encounter_info,
         Difficulty::Mythic,
-        |props| view! {  <ExperimentsParameters props/> },
+        |props| view! { <ExperimentsParameters props/> },
         experiments_attacks,
         "boss/experiments.png",
         20,

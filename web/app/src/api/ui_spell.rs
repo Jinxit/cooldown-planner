@@ -1,5 +1,5 @@
 use fight_domain::{Identifier, LookupKey, SpellUuid, TimeStep};
-use leptos::RwSignal;
+use leptos::prelude::*;
 use ordered_float::NotNan;
 use std::collections::BTreeSet;
 

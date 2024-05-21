@@ -1,5 +1,5 @@
 use fight_domain::Identifier;
-use leptos::*;
+use leptos::prelude::*;
 
 pub fn icon_url(identifier: Identifier) -> Option<String> {
     match identifier {

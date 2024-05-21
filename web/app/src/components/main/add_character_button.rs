@@ -2,13 +2,13 @@ use crate::api::{
     ui_character::{UiCharacter, UiCharacterTemplate},
     ui_state::UiState,
 };
-use leptos::*;
+use leptos::prelude::*;
 
 #[component]
 pub fn AddCharacterButton() -> impl IntoView
 where
 {
-    let ui_state = expect_context::<UiState>();
+    let ui_state = use_context::<UiState>().unwrap();
     view! {
         <div
             class="m-px mb-4 flex items-start"

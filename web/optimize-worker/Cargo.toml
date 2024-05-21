@@ -12,7 +12,7 @@ optimizer = { path = "../../optimizer" }
 leptos_workers = { path = "../../../leptos_workers/leptos_workers" }
 
 futures = "0.3"
-localsearch = "0.9"
-ordered-float = "3.7"
+localsearch = "0.12"
+ordered-float = "4.2"
 serde = { version = "1.0", features = ["derive"] }
 wasm-bindgen = { workspace = true }

@@ -9,11 +9,11 @@ use fight_domain::{
     Lookup, TimeStep,
 };
 use itertools::Itertools;
-use leptos::*;
-use leptos::{component, IntoSignal, RwSignal, Signal, SignalGet};
+use leptos::prelude::*;
 use num_traits::{One, Zero};
 use ordered_float::NotNan;
 use std::time::Duration;
+use tracing::warn;
 
 pub fn mythic(
     instance_info: &JournalInstanceResponse,
@@ -23,7 +23,7 @@ pub fn mythic(
         instance_info,
         encounter_info,
         Difficulty::Mythic,
-        |props| view! {  <AmalgamationParameters props/> },
+        |props| view! { <AmalgamationParameters props/> },
         amalgamation_attacks,
         "boss/amalgamation.png",
         60,
@@ -41,10 +41,10 @@ struct AmalgamationProps {
 impl FightProps for AmalgamationProps {
     fn new() -> Self {
         Self {
-            phase_1_clear_1_timer: create_rw_signal(Duration::mm_ss(0, 45)),
-            phase_1_clear_2_timer: create_rw_signal(Duration::mm_ss(1, 25)),
-            phase_1_clear_3_timer: create_rw_signal(Duration::mm_ss(2, 0)),
-            phase_2_start_timer: create_rw_signal(Duration::mm_ss(2, 15)),
+            phase_1_clear_1_timer: RwSignal::new(Duration::mm_ss(0, 45)),
+            phase_1_clear_2_timer: RwSignal::new(Duration::mm_ss(1, 25)),
+            phase_1_clear_3_timer: RwSignal::new(Duration::mm_ss(2, 0)),
+            phase_2_start_timer: RwSignal::new(Duration::mm_ss(2, 15)),
         }
     }
 }

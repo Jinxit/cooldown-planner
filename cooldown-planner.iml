@@ -24,6 +24,9 @@
       <sourceFolder url="file://$MODULE_DIR$/web/leptos_workers/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/web/leptos_workers_macro/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/web/leptos_workers_macro/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/web/battle-net-auth/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/web/storage/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/web/ui/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
       <excludeFolder url="file://$MODULE_DIR$/fight-domain/target" />
       <excludeFolder url="file://$MODULE_DIR$/web/service-worker/pkg" />

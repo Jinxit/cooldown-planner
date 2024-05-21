@@ -1,22 +1,19 @@
-use crate::api::ui_state::UiState;
-use crate::{api::icon_url, reactive::ForEach};
+use crate::api::icon_url;
 use crate::api::ui_character::UiCharacter;
 use crate::api::ui_spell::UiSpell;
-use crate::reactive::ForLookup5;
+use crate::api::ui_state::UiState;
+use crate::reactive::ForEach;
 use fight_domain::{Lookup, Spell, SpellUuid};
-use leptos::*;
+use leptos::prelude::*;
 use std::sync::Arc;
 
 #[component]
-pub fn CharacterSpells(
-) -> impl IntoView {
-    let ui_state = expect_context::<UiState>();
+pub fn CharacterSpells() -> impl IntoView {
+    let ui_state = use_context::<UiState>().unwrap();
     view! {
         <ForEach
             each=move || ui_state.ui_characters()
-            bind:ui_character
-        >
-            {
+            children=move |ui_character| {
                 let column = move || format!("character_{}", ui_character.uuid);
                 let row = "character_spells";
                 view! {
@@ -25,29 +22,27 @@ pub fn CharacterSpells(
                         style:grid-column-start=column
                         style:grid-row-start=row
                     >
-                        <CharacterSpellsToggles ui_character=ui_character />
+                        <CharacterSpellsToggles ui_character=ui_character/>
                     </div>
                 }
             }
-        </ForEach>
+        />
     }
 }
 
 #[component]
 fn CharacterSpellsToggles(ui_character: UiCharacter) -> impl IntoView {
-    let ui_state = expect_context::<UiState>();
+    let ui_state = use_context::<UiState>().unwrap();
     view! {
         <ForEach
             each=move || ui_character.spells.clone()
-            bind:spell
-        >
-            {
+            children=move |spell| {
                 let toggle_spell = move || {
                     ui_state.toggle_spell_enabled(ui_character.uuid, spell.uuid);
                 };
-                view! {  <CharacterSpellsToggle spell=spell toggle_spell=toggle_spell/> }
+                view! { <CharacterSpellsToggle spell=spell toggle_spell=toggle_spell/> }
             }
-        </ForEach>
+        />
     }
 }
 
@@ -85,6 +80,7 @@ where
                 toggle_spell();
             }
         >
+
             {tag}
         </a>
     }

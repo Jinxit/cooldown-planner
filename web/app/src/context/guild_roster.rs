@@ -1,16 +1,14 @@
-use crate::components::main::RosterEntry;
-use crate::context::{PlannerContext, PlannerRealm, PlannerUser, PlayerClass};
-use crate::reactive::resource_ext::ResourceGetExt;
-use crate::serverfns::guild_roster;
-use auto_battle_net::game_data::playable_class::playable_classes_index::PlayableClassesIndexRequest;
-use auto_battle_net::game_data::playable_specialization::playable_specializations_index::PlayableSpecializationsIndexRequest;
-use auto_battle_net::profile::guild::guild_roster::GuildRosterRequest;
-use auto_battle_net::{BattleNetClientAsync, Region};
 use convert_case::{Case, Casing};
-use leptos::*;
+use leptos::prelude::*;
+use leptos::server::serializers::SerdeJson;
 
-#[derive(Copy, Clone, Debug)]
-pub struct GuildRoster(Signal<Vec<RosterEntry>>);
+use crate::components::main::RosterEntry;
+use crate::context::PlannerContext;
+use crate::reactive::async_ext::ReadyOrReloading;
+use crate::serverfns::guild_roster;
+
+#[derive(Clone, Debug)]
+pub struct GuildRoster(ArcSignal<Vec<RosterEntry>>);
 
 impl IntoIterator for GuildRoster {
     type Item = RosterEntry;
@@ -21,18 +19,19 @@ impl IntoIterator for GuildRoster {
     }
 }
 
-fn user_guild_roster() -> Resource<(Option<PlannerRealm>, Option<String>, Region), Vec<RosterEntry>>
-{
-    let planner_context = expect_context::<PlannerContext>();
-    let user = create_memo(move |_| planner_context.user.get());
-    create_resource(
+fn user_guild_roster() -> ArcResource<Vec<RosterEntry>, SerdeJson> {
+    let planner_context = use_context::<PlannerContext>().unwrap();
+    let user = planner_context.user();
+    let region = ArcSignal::derive(move || planner_context.region().get());
+    let user = ArcMemo::new(move |_| user.ready_or_reloading().flatten());
+    ArcResource::new_serde(
         move || {
             (
                 user.get().map(|u| u.realm.clone()),
                 user.get()
                     .and_then(|u| u.guild)
                     .map(|g| g.to_case(Case::Kebab)),
-                planner_context.region.get(),
+                region.get(),
             )
         },
         move |(realm, guild, region)| async move {
@@ -56,10 +55,10 @@ fn user_guild_roster() -> Resource<(Option<PlannerRealm>, Option<String>, Region
 }
 
 pub fn provide_guild_roster_context() {
-    //let (guild_roster, _) = create_signal(vec![]);
+    //let (guild_roster, _) = signal(vec![]);
     //provide_context(GuildRoster(guild_roster.into()))
     let guild_roster = user_guild_roster();
-    provide_context(GuildRoster(Signal::derive(move || {
-        guild_roster.get().unwrap_or_default()
+    provide_context(GuildRoster(ArcSignal::derive(move || {
+        guild_roster.ready_or_reloading().unwrap_or_default()
     })));
 }

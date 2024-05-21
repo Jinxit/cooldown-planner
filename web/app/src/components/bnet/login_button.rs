@@ -1,36 +1,47 @@
-use crate::{serverfns::battle_net_login_url, reactive::resource_ext::ResourceGetExt};
-use leptos::*;
-use leptos_meta::*;
-use leptos_router::*;
+use crate::serverfns::battle_net_login_url;
+use leptos::prelude::*;
+use leptos_router::{hooks::use_location, *};
+use tracing::warn;
 use url::Url;
+use wasm_bindgen_futures::spawn_local;
 
 #[component]
 pub fn LoginButton() -> impl IntoView {
-    let current_url = move || {
+    let current_url = Signal::derive(move || {
         Url::parse(&format!(
             "http://localhost:3000{}{}",
-            use_location().pathname.get(),
-            use_location().search.get(),
+            "", //use_location().pathname.get(),
+            "", //use_location().search.get(),
         ))
         .unwrap()
-    };
+    });
 
-    let login_url_response = create_local_resource(current_url, move |current_url| async move {
-        battle_net_login_url(current_url).await.unwrap_or(None)
+    let (url, set_url) = signal::<Option<Url>>(None);
+
+    Effect::new(move |_| {
+        spawn_local(async move {
+            let new_url = battle_net_login_url(current_url()).await.unwrap_or(None);
+            set_url.set(new_url)
+        });
+    });
+
+    let login_url_response = AsyncDerived::new(move || async move {
+        //battle_net_login_url(current_url()).await.unwrap_or(None)
+        Some(Url::parse("https://example.com").unwrap())
     });
 
     view! {
         <Suspense fallback=move || {
-            view! {  <p>"..."</p> }
+            view! { <p>"..."</p> }
         }>
             {move || {
-                login_url_response
-                    .get().flatten()
-                                .map(|url| url.to_string())
-                                .map(|url| {
-                                    view! {  <a href=url>"Login"</a> }
-                                })
+                url.get()
+                    .map(|url| url.to_string())
+                    .map(|url| {
+                        view! { <a href=url>"Login"</a> }
+                    })
             }}
+
         </Suspense>
     }
 }

@@ -1,4 +1,5 @@
 #![allow(clippy::ptr_arg)]
+#![allow(clippy::get_first)]
 
 mod fetch;
 mod infer;
@@ -78,7 +79,6 @@ async fn main() {
             let output = generate_api(&root_name, method, should_cache, "{}.api.blizzard.com");
             eprintln!("write 0 {dest_path:?}");
             File::options()
-                .write(true)
                 .create(true)
                 .truncate(false)
                 .append(true)
@@ -142,7 +142,6 @@ async fn main() {
             let output = generate_api(&root_name, method, true, "{}.api.blizzard.com");
             eprintln!("write 0 {dest_path:?}");
             File::options()
-                .write(true)
                 .create(true)
                 .truncate(false)
                 .append(true)
@@ -177,7 +176,6 @@ async fn main() {
         let dest_path = Path::new(&out_dir).join(parent).join("mod.rs");
         fs::create_dir_all(dest_path.parent().unwrap()).unwrap();
         File::options()
-            .write(true)
             .create(true)
             .truncate(false)
             .append(true)
@@ -206,7 +204,6 @@ async fn main() {
         fs::create_dir_all(dest_path.parent().unwrap()).unwrap();
         eprintln!("writing 3 {dest_path:?}");
         File::options()
-            .write(true)
             .create(true)
             .truncate(false)
             .append(true)
@@ -233,7 +230,6 @@ async fn main() {
         fs::create_dir_all(dest_path.parent().unwrap()).unwrap();
         eprintln!("writing 4 {dest_path:?}");
         File::options()
-            .write(true)
             .create(true)
             .truncate(false)
             .append(true)

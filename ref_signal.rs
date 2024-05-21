@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use leptos::*;
+use leptos::prelude::*;
 
 #[derive(Clone)]
 pub struct RefSignal<T> {
@@ -23,7 +23,7 @@ impl<Target> RefSignal<Target> {
         Key: PartialEq + 'static,
     {
         let signal_tmp = signal.clone();
-        let memo = create_memo(cx, move |_| {
+        let memo = Memo::new(cx, move |_| {
             signal_tmp.with(|value| {
                 let value = getter(value);
                 key(value)

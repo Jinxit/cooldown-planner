@@ -1,12 +1,15 @@
-use crate::{api::{ui_character::UiCharacter, ui_state::UiState}, reactive::blank_suspense::BlankSuspense};
+use crate::api::{ui_character::UiCharacter, ui_state::UiState};
 use fight_domain::{Attack, Character, Lookup};
 use itertools::Itertools;
-use leptos::*;
+use leptos::{prelude::*, tachys::view::any_view::IntoAny};
 use std::sync::Arc;
 
 #[component]
-pub fn GridSkeleton(#[prop(into)] tab_open: Signal<bool>, children: ChildrenFn) -> impl IntoView {
-    let ui_state = expect_context::<UiState>();
+pub fn GridSkeleton(
+    #[prop(into)] tab_open: Signal<bool>,
+    children: ChildrenFragment,
+) -> impl IntoView {
+    let ui_state = use_context::<UiState>().unwrap();
     let grid_template_columns = move || {
         let ui_characters = ui_state.ui_characters();
         [
@@ -63,12 +66,11 @@ pub fn GridSkeleton(#[prop(into)] tab_open: Signal<bool>, children: ChildrenFn) 
         .join(" ")
     };
 
-
     let children = children()
-        .nodes
-        .into_iter()
-        .map(|child| view! { <BlankSuspense>{child.clone()}</BlankSuspense> })
-        .collect_view();
+            .nodes
+            .into_iter()
+            .map(|child| view! { <Suspense>{child}</Suspense> })
+            .collect::<Vec<_>>();
 
     view! {
         <div

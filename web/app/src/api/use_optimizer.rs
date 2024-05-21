@@ -1,35 +1,28 @@
-use crate::api::ui_assignment::{UiAssignment, UiAssignmentState};
-use crate::api::ui_character::UiCharacter;
-use crate::context::with_workers;
-use crate::reactive::memo::Memoize;
-use fight_domain::{Attack, AttackUuid, Character, Lookup, Spell, SpellUuid};
-use futures_channel::oneshot;
+use std::future::Future;
+use std::sync::{Arc, Mutex};
+
 use futures_util::SinkExt;
 use itertools::Itertools;
-use leptos::*;
-use leptos_use::{signal_throttled, use_throttle_fn, use_throttle_fn_with_arg, watch_throttled};
-use leptos_workers::executors::{AbortHandle, PoolExecutor};
-use leptos_workers::workers;
+use leptos::prelude::*;
+//use leptos_use::{signal_throttled, use_throttle_fn, use_throttle_fn_with_arg, watch_throttled};
+use leptos_workers::executors::AbortHandle;
+use wasm_bindgen_futures::spawn_local;
+
 use optimize_worker::{OptimizeRequest, OptimizeWorkerCallback};
-use optimizer::Assignment;
-use std::cell::RefCell;
-use std::collections::HashMap;
-use std::future::Future;
-use std::rc::Rc;
-use std::sync::Arc;
-use std::time::Duration;
-use wasm_bindgen::closure::Closure;
-use wasm_bindgen::JsValue;
+
+use crate::context::with_workers;
+use crate::reactive::async_ext::ReadyOrReloading;
+use crate::reactive::memo::Memoize;
 
 use super::ui_state::UiState;
 
 pub fn use_optimizer() {
-    let ui_state = expect_context::<UiState>();
+    let ui_state = use_context::<UiState>().unwrap();
 
     let request = {
-        let request_id = Rc::new(RefCell::new(0_usize));
-        create_memo(move |_| {
-            let mut request_id = request_id.borrow_mut();
+        let request_id = Arc::new(Mutex::new(0_usize));
+        Memo::new(move |_| {
+            let mut request_id = request_id.lock().unwrap();
             *request_id += 1;
             let next_request_id = *request_id;
             warn!("next_request_id {}", next_request_id);
@@ -42,21 +35,24 @@ pub fn use_optimizer() {
         })
     };
 
-    let response_id = Rc::new(RefCell::new(0_usize));
-    let throttled_request = signal_throttled(request, MaybeSignal::Static(1000.0));
+    let response_id = Arc::new(Mutex::new(0_usize));
+    let throttled_request = request; //signal_throttled(request, MaybeSignal::Static(1000.0));
 
-    create_effect(
+    Effect::new(
         move |prev_abort_handle: Option<AbortHandle<OptimizeWorkerCallback>>| {
             ui_state.set_planning(true);
             let request: OptimizeRequest = throttled_request.get();
             let request_id = request.request_id;
-            *response_id.borrow_mut() = request_id;
+            {
+                let mut response_id = response_id.lock().unwrap();
+                *response_id = request_id;
+            }
             let response_id = response_id.clone();
             with_workers(move |workers /* PoolExecutor */| {
                 let (new_abort_handle, future) = workers
                     .stream_callback(request, move |response| {
                         // untracked because a new request has already been triggered, this output should just be abandoned
-                        if response.request_id >= *response_id.borrow() {
+                        if response.request_id >= *response_id.lock().unwrap() {
                             warn!("updating for request_id {}", response.request_id);
                             ui_state.update_assignment_suggestions(response.assignments);
                         }
@@ -78,10 +74,11 @@ pub fn use_optimizer() {
 }
 
 mod future {
-    use futures_channel::oneshot;
     use std::future::Future;
     use std::pin::Pin;
     use std::task::{Context, Poll};
+
+    use futures_channel::oneshot;
     use wasm_bindgen::UnwrapThrowExt;
 
     pub fn request_animation_frame() -> impl Future {
@@ -97,7 +94,7 @@ mod future {
     impl RequestAnimationFrameFuture {
         fn new() -> RequestAnimationFrameFuture {
             let (tx, rx) = oneshot::channel();
-            leptos::request_animation_frame(move || {
+            leptos::prelude::request_animation_frame(move || {
                 let _ = tx.send(());
             });
 

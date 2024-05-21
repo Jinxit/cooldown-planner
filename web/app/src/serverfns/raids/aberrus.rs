@@ -5,11 +5,12 @@ use auto_battle_net::game_data::journal::{
     journal_encounter::JournalEncounterResponse, journal_instance::JournalInstanceResponse,
 };
 use futures_util::try_join;
-use leptos::*;
+use leptos::prelude::*;
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
+use leptos::server_fn::codec::{GetUrl, Json, Cbor};
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct AberrusInfo {
     pub instance: JournalInstanceResponse,
     pub kazzara: JournalEncounterResponse,
@@ -24,7 +25,7 @@ pub struct AberrusInfo {
 }
 
 #[instrument]
-#[server(Aberrus, "/bnet", "GetCbor")]
+#[server(prefix = "/bnet", input = GetUrl, output = Json)]
 pub async fn aberrus() -> Result<AberrusInfo, ServerFnError> {
     use crate::serverfns::util::try_fetch_cached;
 
@@ -78,5 +79,5 @@ pub async fn aberrus() -> Result<AberrusInfo, ServerFnError> {
         })
     }
 
-    try_fetch_cached(&("Aberrus"), Duration::from_secs(24 * 60 * 60), inner).await
+    try_fetch_cached(&("Aberrus".to_string()), Duration::from_secs(24 * 60 * 60), inner).await
 }

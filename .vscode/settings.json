@@ -1,27 +1,23 @@
 {
-    "workbench.colorCustomizations": {
-        "activityBar.activeBackground": "#03114b",
-        "activityBar.background": "#03114b",
-        "activityBar.foreground": "#e7e7e7",
-        "activityBar.inactiveForeground": "#e7e7e799",
-        "activityBarBadge.background": "#990623",
-        "activityBarBadge.foreground": "#e7e7e7",
-        "commandCenter.border": "#e7e7e799",
-        "sash.hoverBorder": "#03114b",
-        "statusBar.background": "#01061a",
-        "statusBar.foreground": "#e7e7e7",
-        "statusBarItem.hoverBackground": "#03114b",
-        "statusBarItem.remoteBackground": "#01061a",
-        "statusBarItem.remoteForeground": "#e7e7e7",
-        "titleBar.activeBackground": "#01061a",
-        "titleBar.activeForeground": "#e7e7e7",
-        "titleBar.inactiveBackground": "#01061a99",
-        "titleBar.inactiveForeground": "#e7e7e799"
-    },
-    "peacock.color": "#01061a",
     "rust-analyzer.check.command": "clippy",
     "rust-analyzer.checkOnSave": true,
-    "rust-analyzer.cargo.features": [
-        "hydrate"
+    "rust-analyzer.procMacro.ignored": {
+        "leptos_macro": [
+            // optional:
+            // "component",
+            "server"
+        ],
+    },
+    // if code that is cfg-gated for the `ssr` feature is shown as inactive,
+    // you may want to tell rust-analyzer to enable the `ssr` feature by default
+    //
+    // you can also use `rust-analyzer.cargo.allFeatures` to enable all features
+    "rust-analyzer.cargo.features": ["ssr"],
+    "editor.wordBasedSuggestions": "off",
+    "editor.quickSuggestionsDelay": 200,
+    "rust-analyzer.rustfmt.overrideCommand": [
+        "leptosfmt",
+        "--stdin",
+        "--rustfmt"
     ]
 }

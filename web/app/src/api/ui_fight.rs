@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::components::fights::Difficulty;
 use crate::serverfns::encounter_info;
 use auto_battle_net::game_data::journal::journal_encounter::{
@@ -6,7 +8,8 @@ use auto_battle_net::game_data::journal::journal_encounter::{
 use auto_battle_net::game_data::journal::journal_instance::JournalInstanceResponse;
 use auto_battle_net::{BattleNetClientAsync, LocalizedString};
 use fight_domain::{Attack, Lookup};
-use leptos::{IntoView, Signal, View};
+use leptos::prelude::{IntoView, Signal, ViewFn};
+use leptos::tachys::view::any_view::{AnyView, IntoAny};
 use serde::{Deserialize, Serialize};
 
 pub trait FightProps {
@@ -17,7 +20,7 @@ impl FightProps for () {
     fn new() -> Self {}
 }
 
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Clone)]
 pub struct UiFight {
     pub instance_id: i64,
     pub instance_name: LocalizedString,
@@ -25,7 +28,7 @@ pub struct UiFight {
     pub encounter_name: LocalizedString,
     pub encounter_description: LocalizedString,
     pub difficulty: Difficulty,
-    pub parameters: View,
+    pub parameters: ViewFn,
     pub attacks: Signal<Lookup<Attack>>,
     pub image_path: &'static str,
     pub image_offset: i32,
@@ -33,7 +36,7 @@ pub struct UiFight {
 
 impl UiFight {
     #[allow(clippy::too_many_arguments)]
-    pub fn new<P: FightProps + Copy, IV: IntoView>(
+    pub fn new<P: FightProps + Copy + Send + Sync + 'static, IV: IntoView + 'static>(
         instance_info: &JournalInstanceResponse,
         encounter_info: &JournalEncounterResponse,
         difficulty: Difficulty,
@@ -50,7 +53,7 @@ impl UiFight {
             encounter_name: encounter_info.name.clone(),
             encounter_description: encounter_info.description.clone(),
             difficulty,
-            parameters: parameters(props).into_view(),
+            parameters: (move || parameters(props).into_view().into_any()).into(),
             attacks: attacks(props),
             image_path,
             image_offset,

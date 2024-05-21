@@ -38,7 +38,7 @@ pub async fn battle_net_login_callback(
         Some(TokenUrl::new("https://oauth.battle.net/token".to_string()).unwrap()),
     )
     .set_redirect_uri(
-        RedirectUrl::new(format!("http://localhost:3000/bnet/login-callback")).unwrap(),
+        RedirectUrl::new("http://localhost:3000/bnet/login-callback".to_string()).unwrap(),
     );
 
     // Generate a PKCE challenge.

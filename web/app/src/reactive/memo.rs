@@ -1,29 +1,19 @@
-use leptos::{
-    create_memo, create_signal, Memo, RwSignal, SignalGet, SignalSet, SignalWithUntracked,
-    WriteSignal,
-};
+use std::ops::Deref;
 
-pub fn create_memo_signal<T>(value: T) -> (Memo<T>, WriteSignal<T>)
-where
-    T: Clone + PartialEq + 'static,
-{
-    let (value, set_value) = create_signal(value);
-    let value_memo = create_memo(move |_| value.get());
-    (value_memo, set_value)
-}
+use leptos::prelude::*;
 
-pub trait Memoize<U> {
+pub trait Memoize<U: Send + Sync> {
     fn memo(&self) -> Memo<U>;
 }
 
 impl<T, U> Memoize<U> for T
 where
-    T: SignalGet<U> + Clone + 'static,
-    U: Clone + PartialEq + 'static,
+    T: Get<Value = U> + Clone + Send + Sync + 'static,
+    U: Clone + PartialEq + Send + Sync + 'static,
 {
     fn memo(&self) -> Memo<U> {
         let s = self.clone();
-        create_memo(move |_| s.get())
+        Memo::new(move |_| s.get())
     }
 }
 
@@ -31,9 +21,11 @@ pub trait SetMemo<T> {
     fn set_memo(&self, new_value: T);
 }
 
-impl<T> SetMemo<T> for RwSignal<T>
+impl<S, T> SetMemo<T> for S
 where
-    T: PartialEq,
+    S: ReadUntracked<Value = T> + Set<Value = T>,
+    T: Deref + PartialEq,
+    <T as Deref>::Target: PartialEq<T>,
 {
     fn set_memo(&self, new_value: T) {
         if self.with_untracked(|old_value| old_value != &new_value) {

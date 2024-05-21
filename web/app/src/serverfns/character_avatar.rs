@@ -1,17 +1,18 @@
 use crate::api::ui_character::UiCharacter;
 use crate::context::{PlannerContext, PlannerRealm};
 use crate::misc::localized_string_with_context::LocalizedStringWithContext;
-use crate::reactive::map::Map;
 use auto_battle_net::profile::character_media::character_media_summary::CharacterMediaSummaryRequest;
 use auto_battle_net::{BattleNetClientAsync, Locale, Region};
 //use cached::proc_macro::cached;
 use convert_case::{Case, Casing};
-use leptos::*;
+use leptos::prelude::*;
+use server_fn::error::NoCustomError;
 use tracing::{error, instrument, warn};
 use url::Url;
+use leptos::server_fn::codec::{GetUrl, Json, Cbor};
 
 #[instrument]
-#[server(CharacterAvatar, "/bnet", "GetCbor")]
+#[server(prefix = "/bnet", input = GetUrl, output = Cbor)]
 pub async fn character_avatar(
     character_name: String,
     realm_slug: String,
@@ -37,7 +38,7 @@ pub async fn character_avatar(
             .into_iter()
             .find(|asset| asset.key == "avatar")
             .ok_or_else(|| {
-                ServerFnError::ServerError(format!(
+                ServerFnError::ServerError::<NoCustomError>(format!(
                     "avatar not found for character {character_name}"
                 ))
             })?

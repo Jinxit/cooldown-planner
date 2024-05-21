@@ -1,7 +1,6 @@
 use crate::components::ValidatedInput;
-use crate::reactive::memo::Memoize;
 use fight_domain::FromMinutesSeconds;
-use leptos::*;
+use leptos::prelude::*;
 use std::str::FromStr;
 use std::time::Duration;
 
@@ -13,8 +12,8 @@ pub fn TimerInput(
     #[prop(into, optional)] min_value: Option<MaybeSignal<Duration>>,
     #[prop(into, optional)] max_value: Option<MaybeSignal<Duration>>,
 ) -> impl IntoView {
-    let min_memo = min_value.map(|min_value| min_value.memo());
-    let max_memo = max_value.map(|max_value| max_value.memo());
+    let min_memo = min_value.map(|min_value| Memo::new(move |_| min_value.get()));
+    let max_memo = max_value.map(|max_value| Memo::new(move |_| max_value.get()));
     let try_parse = move |s: &str| {
         s.split_once(':')
             .filter(|(minutes, seconds)| minutes.len() <= 2 && seconds.len() <= 2)
@@ -29,12 +28,12 @@ pub fn TimerInput(
             .filter(|duration| duration.as_secs() / 60 < 100)
             .filter(|duration| {
                 min_memo
-                    .map(|min_memo| duration > &min_memo())
+                    .map(|min_memo| duration > &min_memo.get())
                     .unwrap_or(true)
             })
             .filter(|duration| {
                 max_memo
-                    .map(|max_memo| duration < &max_memo())
+                    .map(|max_memo| duration < &max_memo.get())
                     .unwrap_or(true)
             })
     };

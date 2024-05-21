@@ -4,10 +4,11 @@ use convert_case::{Case, Casing};
 use futures_util::future::{join_all, try_join_all};
 use futures_util::StreamExt;
 use itertools::Itertools;
+use server_fn::error::NoCustomError;
 use crate::context::{PlannerRealm, PlannerUser};
 use auto_battle_net::profile::account_profile::account_profile_summary::AccountProfileSummaryRequest;
 use auto_battle_net::{Locale, Region};
-use leptos::*;
+use leptos::prelude::*;
 use num_traits::Zero;
 use ordered_float::NotNan;
 use serde::{Deserialize, Serialize};
@@ -18,6 +19,7 @@ use auto_battle_net::profile::character_encounters::character_raids::CharacterRa
 use auto_battle_net::profile::character_mythic_keystone_profile::character_mythic_keystone_profile_index::CharacterMythicKeystoneProfileIndexRequest;
 use auto_battle_net::profile::character_profile::character_profile_summary::CharacterProfileSummaryRequest;
 use auto_battle_net::BattleNetClientAsync;
+use leptos::server_fn::codec::{GetUrl, PostUrl, Json, Cbor};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
 pub struct CharacterDetails {
@@ -34,24 +36,24 @@ pub struct CharacterDetails {
 }
 
 #[instrument]
-#[server(CurrentMainCharacter, "/bnet", "GetCbor")]
+#[server(CurrentMainCharacter, "/bnet", input = GetUrl, output = Json)]
 pub async fn current_main_character() -> Result<CharacterDetails, ServerFnError> {
     use crate::serverfns::util::{get_bnet_client, get_session, get_storage};
 
     let user = get_session()
         .await
-        .ok_or_else(|| ServerFnError::MissingArg("session".to_string()))?
+        .ok_or_else(|| ServerFnError::MissingArg::<NoCustomError>("session".to_string()))?
         .data()
         .user
         .clone()
-        .ok_or_else(|| ServerFnError::MissingArg("user".to_string()))?;
+        .ok_or_else(|| ServerFnError::MissingArg::<NoCustomError>("user".to_string()))?;
 
     async fn inner(user_id: u64) -> Result<CharacterDetails, ServerFnError> {
         let characters = all_characters_sorted(user_id).await?;
         characters
             .first()
             .cloned()
-            .ok_or_else(|| ServerFnError::Request("No characters".to_string()))
+            .ok_or_else(|| ServerFnError::Request::<NoCustomError>("No characters".to_string()))
     }
 
     let storage = get_storage().await;
@@ -65,7 +67,7 @@ pub async fn current_main_character() -> Result<CharacterDetails, ServerFnError>
 }
 
 #[instrument]
-#[server(SetMainCharacter, "/bnet", "Cbor")]
+#[server(prefix = "/bnet", input = PostUrl)]
 pub async fn set_main_character(
     region: Region,
     name: String,
@@ -75,11 +77,11 @@ pub async fn set_main_character(
 
     let user = get_session()
         .await
-        .ok_or_else(|| ServerFnError::MissingArg("session".to_string()))?
+        .ok_or_else(|| ServerFnError::MissingArg::<NoCustomError>("session".to_string()))?
         .data()
         .user
         .clone()
-        .ok_or_else(|| ServerFnError::MissingArg("user".to_string()))?;
+        .ok_or_else(|| ServerFnError::MissingArg::<NoCustomError>("user".to_string()))?;
 
     let storage = get_storage().await;
 

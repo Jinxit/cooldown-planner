@@ -12,11 +12,11 @@ use auto_battle_net::{BattleNetClientAsync, LocalizedString};
 //use cached::proc_macro::cached;
 use fight_domain::{Attack, Lookup};
 use futures_util::future::try_join_all;
-use leptos::MaybeSignal;
-use leptos::{server, ServerFnError};
-use leptos::{IntoView, Signal, View};
+use leptos::prelude::*;
 use serde::{Deserialize, Serialize};
+use server_fn::error::NoCustomError;
 use tracing::instrument;
+use leptos::server_fn::codec::{GetUrl, Json, Cbor};
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct GuildRosterEntry {
@@ -25,7 +25,7 @@ pub struct GuildRosterEntry {
 }
 
 #[instrument]
-#[server(GuildRoster, "/bnet", "GetCbor")]
+#[server(prefix = "/bnet", input = GetUrl, output = Json)]
 pub async fn guild_roster(
     realm_slug: String,
     guild_name_slug: String,
@@ -83,7 +83,7 @@ pub async fn guild_roster(
 
     let user_id = get_session()
         .await
-        .ok_or_else(|| ServerFnError::MissingArg("session".to_string()))?;
+        .ok_or_else(|| ServerFnError::MissingArg::<NoCustomError>("session".to_string()))?;
 
     try_fetch_cached(
         &(realm_slug.clone(), guild_name_slug.clone(), region),

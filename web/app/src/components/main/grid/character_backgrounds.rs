@@ -1,27 +1,30 @@
+use std::collections::HashMap;
+use std::sync::Arc;
+
+use leptos::prelude::*;
+use url::Url;
+
+use auto_battle_net::{Locale, Region};
+use auto_battle_net::profile::character_profile::character_profile_summary::CharacterProfileSummaryResponse;
+
 use crate::api::ui_character::UiCharacter;
 use crate::api::ui_state::UiState;
 use crate::context::PlannerContext;
 use crate::misc::flatten_ok::FlattenOk;
-use crate::reactive::blank_suspense::BlankSuspense;
-use crate::reactive::resource_ext::ResourceMapExt;
-use crate::reactive::{ForEach, ForLookup5};
-use crate::serverfns::{character_main_image, character_summary};
-use auto_battle_net::profile::character_profile::character_profile_summary::CharacterProfileSummaryResponse;
-use auto_battle_net::{Locale, Region};
-use fight_domain::Lookup;
-use futures_util::try_join;
-use leptos::*;
-use std::collections::HashMap;
-use std::sync::Arc;
-use url::Url;
+use crate::reactive::async_ext::ReadyOrReloading;
+use crate::reactive::ForEach;
+use crate::serverfns::character_main_image;
 
 #[component]
 pub fn CharacterBackgrounds(#[prop(into)] tab_open: Signal<bool>) -> impl IntoView {
-    let ui_state = expect_context::<UiState>();
+    let ui_state = use_context::<UiState>().unwrap();
     view! {
-        <ForEach each=move || ui_state.ui_characters() bind:ui_character>
-            <CharacterBackground ui_character tab_open/>
-        </ForEach>
+        <ForEach
+            each=move || ui_state.ui_characters()
+            children=move |ui_character| {
+                view! { <CharacterBackground ui_character tab_open/> }
+            }
+        />
     }
 }
 
@@ -31,7 +34,7 @@ pub fn CharacterBackground(
     #[prop(into)] tab_open: Signal<bool>,
 ) -> impl IntoView {
     let default_offset = (-48.0, -20.0);
-    let offset_map = store_value(Arc::new(
+    let offset_map = StoredValue::new(Arc::new(
         [
             (("Blood Elf", "MALE"), (18.0, -23.2)),
             (("Blood Elf", "FEMALE"), (18.0, -26.0)),
@@ -59,25 +62,27 @@ pub fn CharacterBackground(
         .collect::<HashMap<_, _>>(),
     ));
 
-    let planner_context = expect_context::<PlannerContext>();
+    let planner_context = use_context::<PlannerContext>().unwrap();
+    let user = planner_context.user();
+    let region = planner_context.region();
 
     let realm_slug = Signal::derive({
         let realm = ui_character.realm.clone();
         move || {
             realm
                 .clone()
-                .or_else(|| Some(planner_context.user.get()?.realm))
+                .or_else(|| Some(user.ready_or_reloading().flatten()?.realm))
                 .map(|r| r.slug)
                 .unwrap_or_default()
         }
     });
 
-    #[derive(Clone, serde::Serialize, serde::Deserialize)]
+    #[derive(Clone, serde::Serialize, serde::Deserialize, Debug)]
     struct BackgroundData {
         image_url: Url,
         character_summary: CharacterProfileSummaryResponse,
     }
-    let background_data = create_resource(move || (realm_slug(), planner_context.region.get()), {
+    let background_data = Resource::new_serde(move || (realm_slug(), region.get()), {
         let character_name = ui_character.name.unwrap_or_default();
         move |(realm_slug, region): (String, Region)| {
             let character_name = character_name.clone();
@@ -87,53 +92,54 @@ pub fn CharacterBackground(
                     None
                 } else {
                     let image_url =
-                        character_main_image(character_name.clone(), realm_slug.clone(), region);
-                    let character_summary =
+                        character_main_image(character_name.clone(), realm_slug.clone(), region)
+                            .await;
+                    /*let character_summary =
                         character_summary(character_name.clone(), realm_slug.clone(), region);
                     let (image_url, character_summary) = try_join!(image_url, character_summary).ok()?;
                     Some(BackgroundData {
                         image_url,
                         character_summary,
-                    })
+                    })*/
+                    None
                 }
             }
         }
     });
 
-    let background_view =
-        move |background_data: &BackgroundData| {
-            let BackgroundData {
-                image_url,
-                character_summary
-            } = background_data;
-            let background_image = format!("url({image_url})");
-            let offset_map = offset_map();
-            let race_name = character_summary.race.name.get(Locale::EnglishUnitedStates);
-            let offset = offset_map.get(&(race_name, character_summary.gender.r#type.as_ref()));
-            if offset.as_ref().is_none() {
-                error!(
-                    "Unknown race {:?} and gender {:?}",
-                    &character_summary.race.name, &character_summary.gender.name
-                );
-            }
-            let offset = offset.unwrap_or(&default_offset);
-            let bg_offset = format!("right calc(34% - {}rem) top {}rem", offset.0, offset.1);
-            view! {
-                <div
-                    class="fade-to-b-1200 absolute h-full w-full opacity-25 brightness-0 contrast-100"
-                    style:background-position=bg_offset.clone()
-                    style:background-image=background_image.clone()
-                ></div>
-                <div
-                    class="fade-to-b-4rem absolute h-full w-full opacity-75"
-                    style:background-position=bg_offset
-                    style:background-image=background_image
-                ></div>
-                <div class="absolute h-full w-full bg-gradient-to-t from-slate-700 to-transparent to-60%"></div>
-                <div class="absolute h-full w-full bg-gradient-to-l from-slate-700 to-transparent to-10%"></div>
-                <div class="absolute h-full w-full bg-gradient-to-r from-slate-700 to-transparent to-[8rem]"></div>
-            }
-        };
+    let background_view = move |background_data: &BackgroundData| {
+        let BackgroundData {
+            image_url,
+            character_summary,
+        } = background_data;
+        let background_image = format!("url({image_url})");
+        let offset_map = offset_map.get_value();
+        let race_name = character_summary.race.name.get(Locale::EnglishUnitedStates);
+        let offset = offset_map.get(&(race_name, character_summary.gender.r#type.as_ref()));
+        if offset.as_ref().is_none() {
+            error!(
+                "Unknown race {:?} and gender {:?}",
+                &character_summary.race.name, &character_summary.gender.name
+            );
+        }
+        let offset = offset.unwrap_or(&default_offset);
+        let bg_offset = format!("right calc(34% - {}rem) top {}rem", offset.0, offset.1);
+        view! {
+            <div
+                class="fade-to-b-1200 absolute h-full w-full opacity-25 brightness-0 contrast-100"
+                style:background-position=bg_offset.clone()
+                style:background-image=background_image.clone()
+            ></div>
+            <div
+                class="fade-to-b-4rem absolute h-full w-full opacity-75"
+                style:background-position=bg_offset
+                style:background-image=background_image
+            ></div>
+            <div class="absolute h-full w-full bg-gradient-to-t from-slate-700 to-transparent to-60%"></div>
+            <div class="absolute h-full w-full bg-gradient-to-l from-slate-700 to-transparent to-10%"></div>
+            <div class="absolute h-full w-full bg-gradient-to-r from-slate-700 to-transparent to-[8rem]"></div>
+        }
+    };
 
     view! {
         <div
@@ -141,23 +147,19 @@ pub fn CharacterBackground(
             class=("-mt-4", tab_open)
             class=("-mt-8", move || !tab_open())
             style:grid-column-start=move || format!("character_{}", &ui_character.uuid)
-            style:grid-row-end=10000
+            style:grid-row-end="10000"
             style:grid-row-start="character_name"
             style:width="calc(100% + 1rem)"
         >
             <div class="[10rem]:opacity-100 w-full opacity-0 @[6rem]:opacity-50 @[8rem]:opacity-75">
-                <BlankSuspense>
-                    {move || {
+                <Suspense>
+                    {Suspend(async move {
                         background_data
-                            .map(move |background_data| {
-                                background_data.as_ref().map(|background_data| {
-                                    background_view(
-                                        background_data,
-                                    )
-                                })
-                            })
-                    }}
-                </BlankSuspense>
+                            .await
+                            .map(move |background_data| { background_view(&background_data) })
+                    })}
+
+                </Suspense>
             </div>
         </div>
     }

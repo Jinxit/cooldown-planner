@@ -18,16 +18,17 @@ use bytes::Bytes;
 use futures_util::future::join_all;
 use http::Method;
 use http::StatusCode;
-use leptos::use_context;
-use leptos::*;
+use leptos::prelude::*;
 use reqwest::Response;
 use serde::{Deserialize, Serialize};
+use server_fn::error::NoCustomError;
 use std::num::NonZeroU16;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::time::Duration;
 use tracing::{error, instrument};
 use url::Url;
+use leptos::server_fn::codec::{GetUrl, Json, Cbor};
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct RealmClassEntry {
@@ -36,7 +37,7 @@ pub struct RealmClassEntry {
 }
 
 #[instrument]
-#[server(RealmsForCharacter, "/bnet", "GetCbor")]
+#[server(prefix = "/bnet", input = GetUrl, output = Json)]
 pub async fn realms_for_character(
     character_name: String,
     region: Region,
@@ -129,11 +130,11 @@ pub async fn realms_for_character(
 
     let user_id = get_session()
         .await
-        .ok_or_else(|| ServerFnError::MissingArg("session".to_string()))?
+        .ok_or_else(|| ServerFnError::MissingArg::<NoCustomError>("session".to_string()))?
         .data()
         .user
         .as_ref()
-        .ok_or_else(|| ServerFnError::MissingArg("user".to_string()))?
+        .ok_or_else(|| ServerFnError::MissingArg::<NoCustomError>("user".to_string()))?
         .id;
 
     try_fetch_cached(

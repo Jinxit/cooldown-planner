@@ -1,4 +1,4 @@
-use leptos::*;
+use leptos::prelude::*;
 use std::marker::PhantomData;
 use uuid::Uuid;
 
@@ -12,23 +12,23 @@ pub fn ValidatedInput<T, F, G>(
     #[prop(into)] initial_value: T,
 ) -> impl IntoView
 where
-    T: 'static,
+    T: Send + Sync + 'static,
     F: Fn(&str) -> Option<T> + Clone + 'static,
     G: Fn(&T) -> String + 'static,
 {
     let id = Uuid::new_v4().to_string();
-    let (value, set_value) = create_signal(reformat(&initial_value));
-    let (invalid, set_invalid) = create_signal(false);
-    let (is_focused, set_is_focused) = create_signal(false);
+    let (value, set_value) = signal(reformat(&initial_value));
+    let (invalid, set_invalid) = signal(false);
+    let (is_focused, set_is_focused) = signal(false);
 
-    create_effect(move |_| {
-        if let Some(result) = try_parse(&value()) {
-            set_result(result);
-            set_invalid(false);
+    Effect::new(move |_| {
+        if let Some(result) = try_parse(&value.get()) {
+            set_result.set(result);
+            set_invalid.set(false);
         } else {
-            set_invalid(true);
+            set_invalid.set(true);
         }
-        if !is_focused() {
+        if !is_focused.get() {
             set_value.update(|value| {
                 if let Some(result) = try_parse(value) {
                     *value = reformat(&result);
@@ -51,24 +51,27 @@ where
                     class=("ring-2", invalid)
                     class=("ring-red-400", invalid)
                     class=("focus-visible:ring-red-400", invalid)
-                    class=("focus-visible:ring-slate-500", move || !invalid())
+                    class=("focus-visible:ring-slate-500", move || !invalid.get())
                     placeholder=placeholder
-                    prop:value=value
+                    prop:value=move || value().clone()
                     on:input=move |ev| {
                         let text = event_target_value(&ev);
-                        set_value(text);
+                        set_value.set(text);
                     }
+
                     on:focus=move |_| {
-                        set_is_focused(true);
+                        set_is_focused.set(true);
                     }
+
                     on:blur=move |_| {
-                        set_is_focused(false);
+                        set_is_focused.set(false);
                     }
                 />
+
                 <div class="absolute left-0 top-0 flex h-full items-center pl-2">
                     <div
                         class="fas fa-hourglass pointer-events-none text-sm"
-                        class=("text-slate-400", move || !invalid())
+                        class=("text-slate-400", move || !invalid.get())
                         class=("text-red-400", invalid)
                     ></div>
                 </div>

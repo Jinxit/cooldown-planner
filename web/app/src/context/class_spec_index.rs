@@ -1,6 +1,6 @@
 use crate::context::PlannerContext;
 use crate::misc::flatten_ok::FlattenOk;
-use crate::reactive::resource_ext::{ResourceAndThenExt, ResourceGetExt};
+use crate::reactive::async_ext::ReadyOrReloading;
 use crate::serverfns::classes_and_specs;
 use auto_battle_net::game_data::playable_class::playable_class::PlayableClassRequest;
 use auto_battle_net::game_data::playable_class::playable_classes_index::{
@@ -12,7 +12,7 @@ use auto_battle_net::game_data::playable_specialization::playable_specialization
 };
 use auto_battle_net::{BattleNetClientAsync, LocalizedString};
 use futures_util::future::try_join_all;
-use leptos::*;
+use leptos::prelude::*;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -25,23 +25,25 @@ pub struct ClassSpecIndex {
 
 impl ClassSpecIndex {
     fn new() -> Self {
-        let classes_and_specs = create_resource(|| (), move |_| classes_and_specs());
-        let classes = create_memo(move |_| {
+        let classes_and_specs = Resource::new_serde(|| (), move |_| classes_and_specs());
+        let classes = Memo::new(move |_| {
             classes_and_specs
-                .and_then(|cns| cns.iter().map(|(k, _)| k.clone()).collect::<Vec<_>>())
+                .ready_or_reloading()
                 .flatten_ok()
+                .map(|cns| cns.iter().map(|(k, _)| k.clone()).collect::<Vec<_>>())
                 .unwrap_or_default()
         });
-        let specs = create_memo(move |_| {
+        let specs = Memo::new(move |_| {
             classes_and_specs
-                .and_then(|cns| cns.iter().flat_map(|(_, v)| v.clone()).collect::<Vec<_>>())
+                .ready_or_reloading()
                 .flatten_ok()
+                .map(|cns| cns.iter().flat_map(|(_, v)| v.clone()).collect::<Vec<_>>())
                 .unwrap_or_default()
         });
-        let specs_for_class = create_memo(move |_| {
+        let specs_for_class = Memo::new(move |_| {
             Arc::new(
                 classes_and_specs
-                    .get()
+                    .ready_or_reloading()
                     .flatten_ok()
                     .unwrap_or_default()
                     .into_iter()

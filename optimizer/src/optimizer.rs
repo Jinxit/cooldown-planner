@@ -1,37 +1,51 @@
-use crate::optimizers::SimulatedAnnealingOptimizer;
+use std::time::Duration;
+
 use localsearch::optim::{
-    EpsilonGreedyOptimizer, HillClimbingOptimizer, LogisticAnnealingOptimizer,
-    RelativeAnnealingOptimizer,
+    EpsilonGreedyOptimizer, HillClimbingOptimizer, LocalSearchOptimizer,
+    LogisticAnnealingOptimizer, RelativeAnnealingOptimizer,
 };
 use localsearch::{OptCallbackFn, OptModel};
 use ordered_float::NotNan;
+
+use crate::optimizers::SimulatedAnnealingOptimizer;
 
 pub trait Optimizer {
     fn optimize<M, F>(
         &self,
         model: &M,
-        initial_state: Option<M::StateType>,
+        initial_state: Option<M::SolutionType>,
         n_iter: usize,
+        time_limit: Duration,
         callback: Option<&F>,
-    ) -> (M::StateType, M::ScoreType)
+    ) -> (M::SolutionType, M::ScoreType)
     where
         M: OptModel<ScoreType = NotNan<f64>> + Sync + Send,
-        F: OptCallbackFn<M::StateType, M::ScoreType>;
+        F: OptCallbackFn<M::SolutionType, M::ScoreType>;
 }
 
 impl Optimizer for EpsilonGreedyOptimizer {
     fn optimize<M, F>(
         &self,
         model: &M,
-        initial_state: Option<M::StateType>,
+        initial_state: Option<M::SolutionType>,
         n_iter: usize,
+        time_limit: Duration,
         callback: Option<&F>,
-    ) -> (M::StateType, M::ScoreType)
+    ) -> (M::SolutionType, M::ScoreType)
     where
         M: OptModel<ScoreType = NotNan<f64>> + Sync + Send,
-        F: OptCallbackFn<M::StateType, M::ScoreType>,
+        F: OptCallbackFn<M::SolutionType, M::ScoreType>,
     {
-        EpsilonGreedyOptimizer::optimize(self, model, initial_state, n_iter, callback)
+        let result = <EpsilonGreedyOptimizer as LocalSearchOptimizer<M>>::optimize(
+            self,
+            model,
+            initial_state,
+            n_iter,
+            time_limit,
+            callback,
+            (),
+        );
+        (result.0, result.1)
     }
 }
 
@@ -39,15 +53,25 @@ impl Optimizer for HillClimbingOptimizer {
     fn optimize<M, F>(
         &self,
         model: &M,
-        initial_state: Option<M::StateType>,
+        initial_state: Option<M::SolutionType>,
         n_iter: usize,
+        time_limit: Duration,
         callback: Option<&F>,
-    ) -> (M::StateType, M::ScoreType)
+    ) -> (M::SolutionType, M::ScoreType)
     where
         M: OptModel<ScoreType = NotNan<f64>> + Sync + Send,
-        F: OptCallbackFn<M::StateType, M::ScoreType>,
+        F: OptCallbackFn<M::SolutionType, M::ScoreType>,
     {
-        HillClimbingOptimizer::optimize(self, model, initial_state, n_iter, callback)
+        let result = <HillClimbingOptimizer as LocalSearchOptimizer<M>>::optimize(
+            self,
+            model,
+            initial_state,
+            n_iter,
+            time_limit,
+            callback,
+            (),
+        );
+        (result.0, result.1)
     }
 }
 
@@ -55,15 +79,25 @@ impl Optimizer for LogisticAnnealingOptimizer {
     fn optimize<M, F>(
         &self,
         model: &M,
-        initial_state: Option<M::StateType>,
+        initial_state: Option<M::SolutionType>,
         n_iter: usize,
+        time_limit: Duration,
         callback: Option<&F>,
-    ) -> (M::StateType, M::ScoreType)
+    ) -> (M::SolutionType, M::ScoreType)
     where
         M: OptModel<ScoreType = NotNan<f64>> + Sync + Send,
-        F: OptCallbackFn<M::StateType, M::ScoreType>,
+        F: OptCallbackFn<M::SolutionType, M::ScoreType>,
     {
-        LogisticAnnealingOptimizer::optimize(self, model, initial_state, n_iter, callback)
+        let result = <LogisticAnnealingOptimizer as LocalSearchOptimizer<M>>::optimize(
+            self,
+            model,
+            initial_state,
+            n_iter,
+            time_limit,
+            callback,
+            (),
+        );
+        (result.0, result.1)
     }
 }
 
@@ -71,15 +105,25 @@ impl Optimizer for RelativeAnnealingOptimizer {
     fn optimize<M, F>(
         &self,
         model: &M,
-        initial_state: Option<M::StateType>,
+        initial_state: Option<M::SolutionType>,
         n_iter: usize,
+        time_limit: Duration,
         callback: Option<&F>,
-    ) -> (M::StateType, M::ScoreType)
+    ) -> (M::SolutionType, M::ScoreType)
     where
         M: OptModel<ScoreType = NotNan<f64>> + Sync + Send,
-        F: OptCallbackFn<M::StateType, M::ScoreType>,
+        F: OptCallbackFn<M::SolutionType, M::ScoreType>,
     {
-        RelativeAnnealingOptimizer::optimize(self, model, initial_state, n_iter, callback)
+        let result = <RelativeAnnealingOptimizer as LocalSearchOptimizer<M>>::optimize(
+            self,
+            model,
+            initial_state,
+            n_iter,
+            time_limit,
+            callback,
+            (),
+        );
+        (result.0, result.1)
     }
 }
 
@@ -87,14 +131,23 @@ impl Optimizer for SimulatedAnnealingOptimizer {
     fn optimize<M, F>(
         &self,
         model: &M,
-        initial_state: Option<M::StateType>,
+        initial_state: Option<M::SolutionType>,
         n_iter: usize,
+        time_limit: Duration,
         callback: Option<&F>,
-    ) -> (M::StateType, M::ScoreType)
+    ) -> (M::SolutionType, M::ScoreType)
     where
         M: OptModel<ScoreType = NotNan<f64>> + Sync + Send,
-        F: OptCallbackFn<M::StateType, M::ScoreType>,
+        F: OptCallbackFn<M::SolutionType, M::ScoreType>,
     {
-        SimulatedAnnealingOptimizer::optimize(self, model, initial_state, n_iter, callback)
+        let result = SimulatedAnnealingOptimizer::optimize(
+            self,
+            model,
+            initial_state,
+            n_iter,
+            time_limit,
+            callback,
+        );
+        (result.0, result.1)
     }
 }

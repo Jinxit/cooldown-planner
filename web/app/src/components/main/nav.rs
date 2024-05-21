@@ -1,24 +1,23 @@
-use crate::context::PlannerContext;
-use crate::reactive::map::Map;
-use crate::reactive::memo::SetMemo;
-use crate::reactive::resource_ext::ResourceGetExt;
-use crate::serverfns::character_avatar;
-use auto_battle_net::LocalizedString;
-use leptos::*;
-use uuid::Uuid;
+use leptos::prelude::*;
 
-#[slot]
+use crate::context::PlannerContext;
+use crate::reactive::async_ext::ReadyOrReloading;
+use crate::serverfns::character_avatar;
+
+// TODO: slots
+
+//#[slot]
 pub struct Tab {
     tab_header: TabHeader,
     tab_body: TabBody,
 }
 
-#[slot]
+//#[slot]
 pub struct TabHeader {
     children: Children,
 }
 
-#[slot]
+//#[slot]
 pub struct TabBody {
     children: ChildrenFn,
 }
@@ -27,12 +26,14 @@ pub struct TabBody {
 pub fn Nav(#[prop(default=vec![])] tab: Vec<Tab>, tab_open: RwSignal<bool>) -> impl IntoView {
     let (headers, bodies): (Vec<TabHeader>, Vec<TabBody>) =
         tab.into_iter().map(|t| (t.tab_header, t.tab_body)).unzip();
-    let active_tab_index = create_rw_signal(None);
+    let active_tab_index = RwSignal::new(None);
 
     view! {
-        <NavBar tabs=headers active_tab_index=active_tab_index tab_open=tab_open />
-        <NavTabBody active=create_memo(move |_| active_tab_index().is_some() &&tab_open()) >
-            {move || (active_tab_index().and_then(|i| bodies.get(i)).map(|b| (b.children)()))}
+        <NavBar tabs=headers active_tab_index=active_tab_index tab_open=tab_open/>
+        <NavTabBody active=Memo::new(move |_| {
+            active_tab_index().is_some() && tab_open()
+        })>
+            {move || active_tab_index().and_then(|i| bodies.get(i)).map(|b| (b.children)())}
         </NavTabBody>
     }
 }
@@ -43,12 +44,15 @@ fn NavBar(
     active_tab_index: RwSignal<Option<usize>>,
     tab_open: RwSignal<bool>,
 ) -> impl IntoView {
-    let planner_context = expect_context::<PlannerContext>();
-    let name = Signal::derive(move || planner_context.user.get().map(|u| u.name));
-    let realm = Signal::derive(move || planner_context.user.get().map(|u| u.realm));
-    let guild = Signal::derive(move || planner_context.user.get().and_then(|u| u.guild));
-    let avatar = create_resource(
-        move || (name(), realm(), planner_context.region.get()),
+    let planner_context = use_context::<PlannerContext>().unwrap();
+    let user = planner_context.user();
+    let user = Signal::derive(move || user.ready_or_reloading().flatten());
+    let name = Signal::derive(move || user.get().map(|u| u.name));
+    let realm = Signal::derive(move || user.get().map(|u| u.realm));
+    let guild = Signal::derive(move || user.get().and_then(|u| u.guild));
+    let region = planner_context.region();
+    let avatar = Resource::new_serde(
+        move || (name(), realm(), region.get()),
         move |(name, realm, region)| async move {
             character_avatar(name?, realm?.slug, region).await.ok()
         },
@@ -58,23 +62,31 @@ fn NavBar(
             <div class="relative flex items-baseline">
                 <div class="m-2 hidden flex-1 flex-grow self-end sm:flex">
                     <div class="-mb-[2px] flex space-x-4">
-                        {tabs.into_iter().enumerate().map(|(index, tab)| {
-                            view! {
-                                <NavTab
-                                    active=create_memo(move |_| Some(index) == active_tab_index() &&tab_open())
-                                    on:click=move |_| {
-                                        if Some(index) == active_tab_index() &&tab_open() {
-                                            tab_open.set(false);
-                                        } else {
-                                            active_tab_index.set(Some(index));
-                                            tab_open.set(true);
+                        {tabs
+                            .into_iter()
+                            .enumerate()
+                            .map(|(index, tab)| {
+                                view! {
+                                    <NavTab
+                                        active=Memo::new(move |_| {
+                                            Some(index) == active_tab_index() && tab_open()
+                                        })
+
+                                        on:click=move |_| {
+                                            if Some(index) == active_tab_index() && tab_open() {
+                                                tab_open.set(false);
+                                            } else {
+                                                active_tab_index.set(Some(index));
+                                                tab_open.set(true);
+                                            }
                                         }
-                                    }
-                                >
-                                    {(tab.children)()}
-                                </NavTab>
-                            }
-                        }).collect_view()}
+                                    >
+
+                                        {(tab.children)()}
+                                    </NavTab>
+                                }
+                            })
+                            .collect::<Vec<_>>()}
                     </div>
                 </div>
                 <div class="m-2 space-y-2 self-center sm:hidden">
@@ -91,14 +103,15 @@ fn NavBar(
                             <span class="overflow-x-visible whitespace-nowrap font-bold">
                                 {name}
                             </span>
-                            <span class="overflow-x-visible whitespace-nowrap">
-                                {guild}
-                            </span>
+                            <span class="overflow-x-visible whitespace-nowrap">{guild}</span>
                         </div>
                         <img
                             class="m-2 w-8 h-8 -scale-x-100 rounded-full border-2 border-slate-900 bg-slate-800"
-                            alt=move || avatar.get().flatten().map(|_| "Character Picture")
-                            src=move || avatar.get().flatten().map(|u| u.to_string())
+                            alt=move || {
+                                avatar.ready_or_reloading().flatten().map(|_| "Character Picture")
+                            }
+
+                            src=move || avatar.ready_or_reloading().flatten().map(|u| u.to_string())
                         />
                     </div>
                 </div>
@@ -130,15 +143,13 @@ fn NavTab(#[prop(into)] active: Signal<bool>, children: Children) -> impl IntoVi
 #[component]
 fn NavTabBody(#[prop(into)] active: Signal<bool>, children: Children) -> impl IntoView {
     view! {
-        <div class="w-100 relative flex items-end justify-end overflow-hidden border-slate-900 transition-all"
+        <div
+            class="w-100 relative flex items-end justify-end overflow-hidden border-slate-900 transition-all"
             class=("border-b-2", active)
             class=("bg-slate-800", active)
             class=("shadow-md", active)
             class=("h-36", active)
-            /*class=("max-h-36", active)*/
-            /*class=("min-h-[2.6rem]", active)*/
-            /*class=("max-h-0", move || !active())*/
-            /*class=("min-h-0", move || !active())*/
+
             class=("h-0", move || !active())
         >
             {children()}

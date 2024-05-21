@@ -2,7 +2,7 @@ use crate::api::ui_spell::UiSpell;
 use crate::localization;
 use crate::misc::localized_string_with_context::LocalizedStringWithContext;
 use fight_domain::Lookup;
-use leptos::*;
+use leptos::prelude::*;
 
 pub mod death_knight;
 pub mod demon_hunter;

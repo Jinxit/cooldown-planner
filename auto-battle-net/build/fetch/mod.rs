@@ -35,6 +35,7 @@ pub async fn fetch(base_url: Url, method: &Method, access_token: &str) -> JsonMa
         ("{connectedRealmId}", "1080"),
         ("{conduitId}", "20"),
         ("{regionId}", "3"),
+        ("{talentId}", "92667"),
         /*
         ("{pvpBracket}", "2v2"),
         ("{achievementCategoryId}", "15441"),
@@ -127,6 +128,8 @@ pub async fn fetch(base_url: Url, method: &Method, access_token: &str) -> JsonMa
                 let text = response.text().await.unwrap();
                 fs::write(cache_path.as_path(), &text).unwrap();
                 serde_json::from_str(&text).unwrap()
+            } else if response.status().as_u16() == 403 {
+                JsonMap::new()
             } else {
                 panic!(
                     "Failed when fetching {} {} ({}): {} {}",

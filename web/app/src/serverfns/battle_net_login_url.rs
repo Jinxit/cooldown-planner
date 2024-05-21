@@ -1,13 +1,12 @@
-use leptos::*;
+use leptos::prelude::*;
 use tracing::instrument;
 use url::Url;
 
 #[instrument]
-#[server(BattleNetLoginUrl, "/bnet")]
+#[server(prefix = "/bnet")]
 pub async fn battle_net_login_url(return_url: Url) -> Result<Option<Url>, ServerFnError> {
     use crate::serverfns::util::get_session;
     use crate::session::{CooldownPlannerReturnState, CooldownPlannerSession};
-    use leptos::use_context;
     use oauth2::basic::BasicClient;
     use oauth2::{
         AuthUrl, ClientId, ClientSecret, CsrfToken, PkceCodeChallenge, RedirectUrl, TokenUrl,
@@ -31,7 +30,7 @@ pub async fn battle_net_login_url(return_url: Url) -> Result<Option<Url>, Server
         Some(TokenUrl::new("https://oauth.battle.net/token".to_string()).unwrap()),
     )
     .set_redirect_uri(
-        RedirectUrl::new(format!("http://localhost:3000/bnet/login-callback")).unwrap(),
+        RedirectUrl::new("http://localhost:3000/bnet/login-callback".to_string()).unwrap(),
     );
 
     // Generate a PKCE challenge.

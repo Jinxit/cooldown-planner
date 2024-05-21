@@ -1,7 +1,9 @@
-use fight_domain::{AttackUuid, CharacterUuid, LookupKey, SpellUuid};
-use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
+
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+
+use fight_domain::{AttackUuid, CharacterUuid, LookupKey, SpellUuid};
 
 #[derive(Serialize, Deserialize, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct AssignmentUuid(Uuid);
@@ -19,13 +21,20 @@ impl Display for AssignmentUuid {
     }
 }
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, Hash)]
+pub enum AssignmentState {
+    Forced,
+    Suggested,
+    Unassigned,
+}
+
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, Hash)]
 pub struct Assignment {
     pub uuid: AssignmentUuid,
     pub character: CharacterUuid,
     pub spell: SpellUuid,
     pub attack: AttackUuid,
-    pub forced: bool,
+    pub state: AssignmentState,
 }
 
 impl Assignment {
@@ -33,14 +42,14 @@ impl Assignment {
         character: CharacterUuid,
         spell: SpellUuid,
         attack: AttackUuid,
-        forced: bool,
+        state: AssignmentState,
     ) -> Self {
         Self {
             uuid: AssignmentUuid::new(),
             character,
             spell,
             attack,
-            forced,
+            state,
         }
     }
 }

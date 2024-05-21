@@ -1,4 +1,4 @@
-use leptos::*;
+use leptos::prelude::*;
 
 mod copy_button;
 mod lock_button;

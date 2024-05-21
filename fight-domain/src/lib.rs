@@ -1,16 +1,16 @@
-mod attack;
 pub use attack::*;
-mod attack_timer;
 pub use attack_timer::*;
-mod character;
 pub use character::*;
-mod spell;
-pub use spell::*;
-mod identifier;
 pub use identifier::*;
-mod time_step;
-pub use time_step::*;
-mod lookup;
 pub use lookup::*;
+pub use spell::*;
+pub use time_step::*;
 
+mod attack;
+mod attack_timer;
+mod character;
+mod identifier;
+mod lookup;
 mod serde_not_nan;
+mod spell;
+mod time_step;

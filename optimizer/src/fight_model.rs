@@ -1,14 +1,17 @@
-use crate::score_functions::ScoreFunction;
-use crate::{Assignment, Plan};
-use fight_domain::SpellUuid;
+use std::cmp::Ordering;
+use std::collections::HashSet;
+use std::error::Error;
+
 use localsearch::OptModel;
 use num_traits::Zero;
 use ordered_float::NotNan;
 use rand::prelude::*;
 use rand::Rng;
-use std::cmp::Ordering;
-use std::collections::HashSet;
-use std::error::Error;
+
+use fight_domain::SpellUuid;
+
+use crate::{Assignment, AssignmentState, Plan};
+use crate::score_functions::ScoreFunction;
 
 pub struct FightModel {
     pub score_function: ScoreFunction,
@@ -16,27 +19,27 @@ pub struct FightModel {
 
 impl OptModel for FightModel {
     type ScoreType = NotNan<f64>;
-    type StateType = Plan;
+    type SolutionType = Plan;
     type TransitionType = Option<(bool, Assignment)>;
 
-    fn generate_random_state<R: Rng>(
+    fn generate_random_solution<R: Rng>(
         &self,
         _rng: &mut R,
-    ) -> Result<Self::StateType, Box<dyn Error>> {
+    ) -> Result<Self::SolutionType, Box<dyn Error>> {
         // we always provide an initial state, so no random state is necessary
         unimplemented!()
     }
 
-    fn generate_trial_state<R: Rng>(
+    fn generate_trial_solution<R: Rng>(
         &self,
-        current_state: &Self::StateType,
+        current_solution: &Self::SolutionType,
         mut rng: &mut R,
         _current_score: Option<Self::ScoreType>,
-    ) -> (Self::StateType, Self::TransitionType, Self::ScoreType) {
+    ) -> (Self::SolutionType, Self::TransitionType, Self::ScoreType) {
         let add = rng.gen_bool(0.5);
         if add {
             let mut options = vec![];
-            for character in &current_state.characters {
+            for character in &current_solution.characters {
                 for spell in &character.spells {
                     // skip spells that are not enabled
                     if !spell.enabled {
@@ -46,7 +49,7 @@ impl OptModel for FightModel {
                         continue;
                     }
 
-                    let character_assignments = current_state
+                    let character_assignments = current_solution
                         .assignments
                         .iter()
                         .filter(|assignment| assignment.character == character.uuid)
@@ -86,12 +89,12 @@ impl OptModel for FightModel {
                     }
 
                     // create trial states for every attack
-                    for attack in &current_state.attacks {
+                    for attack in &current_solution.attacks {
                         // check if any spells are assigned within +- cooldown of this attack
                         let other_usages_within_cooldown = other_usages
                             .iter()
                             .filter(|other_usage| {
-                                let other_timer = &current_state
+                                let other_timer = &current_solution
                                     .attacks
                                     .get(&other_usage.attack)
                                     .unwrap()
@@ -112,7 +115,7 @@ impl OptModel for FightModel {
                         let has_overlapping_casts =
                             character_assignments.iter().any(|other_usage| {
                                 let attack_timer = attack.timer.static_timer();
-                                let other_timer = current_state
+                                let other_timer = current_solution
                                     .attacks
                                     .get(&other_usage.attack)
                                     .unwrap()
@@ -139,37 +142,37 @@ impl OptModel for FightModel {
                             character.uuid,
                             spell.uuid,
                             attack.uuid,
-                            false,
+                            AssignmentState::Suggested,
                         ));
                     }
                 }
             }
 
-            let mut plan = current_state.clone();
+            let mut plan = current_solution.clone();
             let assignment: Option<Assignment> = options.into_iter().choose(&mut rng);
 
             let score = match &assignment {
                 Some(assignment) => {
                     plan.assign_cooldown(assignment.clone());
-                    self.evaluate_state(&plan)
+                    self.evaluate_solution(&plan)
                 }
                 None => NotNan::new(10000000000.0).unwrap(),
             };
 
             (plan, assignment.map(|assignment| (true, assignment)), score)
         } else {
-            let mut plan = current_state.clone();
-            let assignment: Option<Assignment> = current_state
+            let mut plan = current_solution.clone();
+            let assignment: Option<Assignment> = current_solution
                 .assignments
                 .iter()
-                .filter(|assignment| !assignment.forced)
+                .filter(|assignment| assignment.state != AssignmentState::Forced)
                 .choose(&mut rng)
                 .cloned();
 
             let score = match &assignment {
                 Some(assignment) => {
                     plan.unassign_cooldown(assignment);
-                    self.evaluate_state(&plan)
+                    self.evaluate_solution(&plan)
                 }
                 None => NotNan::new(10000000000.0).unwrap(),
             };
@@ -182,8 +185,8 @@ impl OptModel for FightModel {
         }
     }
 
-    fn evaluate_state(&self, state: &Self::StateType) -> Self::ScoreType {
-        let result = self.score_function.apply(state);
+    fn evaluate_solution(&self, solution: &Self::SolutionType) -> Self::ScoreType {
+        let result = self.score_function.apply(solution);
         // this is to deal with problems relating to -0.0
         // (probably how it compares to 0.0)
         if result.is_zero() {

@@ -1,16 +1,15 @@
-use crate::{reactive::{ForEach, ForLookup5, ForLookup6}, api::ui_state::UiState};
+use crate::api::ui_state::UiState;
+use crate::reactive::ForEach;
 use fight_domain::{Attack, Lookup};
-use leptos::*;
+use leptos::prelude::*;
 
 #[component]
 pub fn Attacks() -> impl IntoView {
-    let ui_state = expect_context::<UiState>();
+    let ui_state = use_context::<UiState>().unwrap();
     view! {
         <ForEach
             each=move || ui_state.attacks()
-            bind:attack
-        >
-            {
+            children=move |attack| {
                 let column = "attack_name";
                 let row = format!("attack_{}", attack.uuid);
                 view! {
@@ -23,12 +22,11 @@ pub fn Attacks() -> impl IntoView {
                     </div>
                 }
             }
-        </ForEach>
+        />
+
         <ForEach
             each=move || ui_state.attacks()
-            bind:attack
-        >
-            {
+            children=move |attack| {
                 let column = "attack_timer";
                 let row = format!("attack_{}", attack.uuid);
                 let attack_timer = attack.timer.static_timer().to_string();
@@ -42,6 +40,6 @@ pub fn Attacks() -> impl IntoView {
                     </div>
                 }
             }
-        </ForEach>
+        />
     }
 }

@@ -70,7 +70,7 @@ impl Connection for SqLiteConnection {
             value_type,
             now
         )
-        .fetch_one(&mut conn)
+        .fetch_one(&mut *conn)
         .await
         .ok()
         .and_then(|s: String| serde_json::from_str(&s).ok())
@@ -102,7 +102,7 @@ impl Connection for SqLiteConnection {
             value,
             live_until
         )
-        .execute(&mut conn)
+        .execute(&mut *conn)
         .await
         .unwrap();
     }
@@ -122,7 +122,7 @@ impl Connection for SqLiteConnection {
             key_type,
             value_type
         )
-        .execute(&mut conn)
+        .execute(&mut *conn)
         .await
         .unwrap();
     }

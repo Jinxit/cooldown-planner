@@ -1,6 +1,6 @@
-use crate::api::ui_fight::{FightProps, UiFight};
+use crate::api::ui_fight::UiFight;
 use crate::misc::flatten_ok::FlattenOk;
-use crate::reactive::resource_ext::ResourceAndThenExt;
+use crate::reactive::async_ext::ReadyOrReloading;
 use crate::serverfns::{aberrus, encounter_info, instance_info};
 use auto_battle_net::game_data::journal::journal_encounter::JournalEncounterResponse;
 use auto_battle_net::game_data::journal::journal_instance::{
@@ -8,13 +8,14 @@ use auto_battle_net::game_data::journal::journal_instance::{
 };
 use auto_battle_net::BattleNetClientAsync;
 use fight_domain::Lookup;
-use leptos::*;
+use leptos::prelude::*;
+use leptos::server::serializers::SerdeJson;
 
 mod amalgamation;
-mod assault;
-mod experiments;
-mod kazzara;
-mod rashok;
+//mod assault;
+//mod experiments;
+//mod kazzara;
+//mod rashok;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum Difficulty {
@@ -23,27 +24,28 @@ pub enum Difficulty {
 }
 
 pub fn mythic_aberrus() -> Signal<Vec<UiFight>> {
-    let info = create_resource(|| (), move |_| aberrus());
+    let info = Resource::new_serde(|| (), move |_| aberrus());
 
     Signal::derive(move || {
-        info.and_then(|info| {
+        if let Some(Ok(info)) = info.ready_or_reloading() {
             vec![
-                kazzara::mythic(&info.instance, &info.kazzara),
+                //kazzara::mythic(&info.instance, &info.kazzara),
                 amalgamation::mythic(&info.instance, &info.amalgamation),
-                experiments::mythic(&info.instance, &info.experiments),
-                assault::mythic(&info.instance, &info.assault),
-                rashok::mythic(&info.instance, &info.rashok),
-                zskarn_mythic(&info.instance, &info.zskarn),
-                magmorax_mythic(&info.instance, &info.magmorax),
-                neltharion_mythic(&info.instance, &info.neltharion),
-                sarkareth_mythic(&info.instance, &info.sarkareth),
+                //experiments::mythic(&info.instance, &info.experiments),
+                //assault::mythic(&info.instance, &info.assault),
+                //rashok::mythic(&info.instance, &info.rashok),
+                //zskarn_mythic(&info.instance, &info.zskarn),
+                //magmorax_mythic(&info.instance, &info.magmorax),
+                //neltharion_mythic(&info.instance, &info.neltharion),
+                //sarkareth_mythic(&info.instance, &info.sarkareth),
             ]
-        })
-        .flatten_ok()
-        .unwrap_or_default()
+        } else {
+            vec![]
+        }
     })
 }
 
+/*
 pub fn sarkareth_mythic(
     instance_info: &JournalInstanceResponse,
     encounter_info: &JournalEncounterResponse,
@@ -103,3 +105,4 @@ pub fn zskarn_mythic(
         22,
     )
 }
+ */

@@ -19,20 +19,21 @@ storage = { path = "../storage", features = ["axum", "sqlite"] }
 leptos = { workspace = true, features = ["serde", "ssr"] }
 leptos_meta = { workspace = true, features = ["ssr"] }
 leptos_router = { workspace = true, features = ["ssr"] }
-leptos_dom = { workspace = true, features = ["ssr"] }
+leptos_dom = { workspace = true }
 leptos_axum.workspace = true
 #leptos_query.workspace = true
 
-axum = { version = "0.6", features = ["headers"] }
-axum-macros = { version = "0.3" }
+axum = { version = "0.7", features = ["macros"] }
+axum-extra = { version = "0.9", features = ["typed-header"] }
+axum-macros = { version = "0.4" }
 bytes = "1.4"
 cached = "0.44"
 console_error_panic_hook = "0.1"
 cookie = { version = "0.17" }
 dotenvy = "0.15"
 futures-util = "0.3.28"
-http = { version = "0.2" }
-hyper = { version = "0.14" }
+http = { version = "1" }
+hyper = { version = "1" }
 hyper-tls = "0.5"
 itertools = { version = "0.10" }
 lambda-web = { version = "0.2", features = ["hyper"], optional = true }
@@ -44,7 +45,7 @@ serde = { version = "1.0", features = ["derive", "rc", "alloc"] }
 serde_json = { version = "1.0" }
 tower = { version = "0.4" }
 tower_governor = "0.0.4"
-tower-http = { version = "0.4", features = ["full"] }
+tower-http = { version = "0.5", features = ["full"] }
 tokio = { version = "1.27", features = ["full"] }
 tracing = { version = "0.1" }
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }

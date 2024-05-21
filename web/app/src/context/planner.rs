@@ -1,8 +1,12 @@
-use crate::{misc::flatten_ok::FlattenOk, serverfns::current_main_character, reactive::resource_ext::ResourceAndThenExt};
-use auto_battle_net::{Locale, LocalizedString, Region};
-use leptos::*;
+use leptos::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::time::Duration;
+
+use auto_battle_net::{Locale, LocalizedString, Region};
+
+use crate::{
+    misc::flatten_ok::FlattenOk, reactive::async_ext::ReadyOrReloading,
+    serverfns::current_main_character,
+};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct PlannerRealm {
@@ -20,40 +24,75 @@ pub struct PlannerUser {
 // TODO: make this a Resource
 #[derive(Debug, Clone)]
 pub struct PlannerContext {
-    pub region: Signal<Region>,
-    pub locale: Signal<Locale>,
-    pub user: Signal<Option<PlannerUser>>,
+    region: ArcSignal<Region>,
+    locale: ArcSignal<Locale>,
+    user: ArcAsyncDerived<Option<PlannerUser>>,
+}
+
+impl PlannerContext {
+    pub fn region(&self) -> Signal<Region> {
+        let region = self.region.clone();
+        Signal::derive(move || region.get())
+    }
+
+    pub fn locale(&self) -> Signal<Locale> {
+        let locale = self.locale.clone();
+        Signal::derive(move || locale.get())
+    }
+
+    pub fn user(&self) -> AsyncDerived<Option<PlannerUser>> {
+        let user = self.user.clone();
+        AsyncDerived::new(move || {
+            let user = user.clone();
+            async move { user.await }
+        })
+    }
 }
 
 pub fn provide_planner_context() {
-    let main_character = create_resource(
+    let main_character = ArcResource::new_serde(
         || (),
         move |_| async move { current_main_character().await },
     );
 
-    let locale = Signal::derive(move || {
-        main_character
-            .and_then(|mc| mc.locale)
-            .flatten_ok()
-            .unwrap_or(Locale::EnglishUnitedStates)
-    });
+    let locale = {
+        let main_character = main_character.clone();
+        ArcSignal::derive(move || {
+            main_character
+                .ready_or_reloading()
+                .flatten_ok()
+                .map(|mc| mc.locale)
+                .unwrap_or(Locale::EnglishUnitedStates)
+        })
+    };
 
-    let region = Signal::derive(move || {
-        main_character
-            .and_then(|mc| mc.region)
-            .flatten_ok()
-            .unwrap_or(Region::Europe)
-    });
+    let region = {
+        let main_character = main_character.clone();
+        ArcSignal::derive(move || {
+            main_character
+                .ready_or_reloading()
+                .flatten_ok()
+                .map(|mc| mc.region)
+                .unwrap_or(Region::Europe)
+        })
+    };
 
-    let user = Signal::derive(move || {
-        main_character
-            .and_then(|mc| PlannerUser {
-                name: mc.name.clone(),
-                realm: mc.realm.clone(),
-                guild: mc.guild.clone(),
-            })
-            .flatten_ok()
-    });
+    let user = {
+        let main_character = main_character.clone();
+        ArcAsyncDerived::new(move || {
+            let main_character = main_character.clone();
+            async move {
+                main_character
+                    .await
+                    .map(|mc| PlannerUser {
+                        name: mc.name.clone(),
+                        realm: mc.realm.clone(),
+                        guild: mc.guild.clone(),
+                    })
+                    .ok()
+            }
+        })
+    };
 
     provide_context(PlannerContext {
         region,

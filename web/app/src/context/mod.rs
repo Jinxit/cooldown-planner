@@ -1,4 +1,4 @@
-use leptos::*;
+use leptos::prelude::*;
 
 mod class_cache;
 mod class_spec_index;

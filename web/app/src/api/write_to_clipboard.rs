@@ -1,6 +1,6 @@
-use leptos::spawn_local;
-use wasm_bindgen_futures::JsFuture;
+use wasm_bindgen_futures::{spawn_local, JsFuture};
 
+// TODO: should probably be an async function called with an Action or smth
 pub fn write_to_clipboard(s: String, set_failed: impl Fn() + 'static) {
     let clipboard = web_sys::window().unwrap().navigator().clipboard();
     match clipboard {

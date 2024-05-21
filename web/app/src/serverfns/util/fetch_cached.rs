@@ -1,6 +1,6 @@
 use super::get_storage;
 use futures_util::Future;
-use leptos::*;
+use leptos::prelude::*;
 use leptos_axum::extract;
 use serde::{de::DeserializeOwned, Serialize};
 use std::error::Error;
@@ -28,7 +28,7 @@ where
     K: Keyable + Send + 'static,
     V: Serialize + DeserializeOwned + Send + Sync + Clone + 'static,
     Fetcher: FnOnce() -> Fut,
-    Fut: Future<Output = Result<V, E>>,
+    Fut: Future<Output = Result<V, E>> + Send,
 {
     let storage = get_storage().await;
     storage.try_fetch(key, ttl, fetcher).await

@@ -1,19 +1,13 @@
-use crate::api::ui_assignment::{UiAssignment, UiAssignmentState};
+use leptos::prelude::*;
+
+use auto_battle_net::{Locale, LocalizedString};
+use fight_domain::{CharacterUuid, Lookup, LookupKey};
+
+use crate::api::ui_assignment::UiAssignment;
 use crate::api::ui_spell::UiSpell;
 use crate::components::specs;
 use crate::components::specs::general;
 use crate::context::PlannerRealm;
-use crate::localization::general;
-use crate::misc::localized_string_with_context::LocalizedStringWithContext;
-use crate::reactive::memo::Memoize;
-use auto_battle_net::{Locale, LocalizedString};
-use fight_domain::{Attack, Character, CharacterUuid, Lookup, LookupKey, Spell, SpellUuid};
-use itertools::Itertools;
-use leptos::*;
-use optimizer::{Assignment, AssignmentUuid};
-use std::cmp::Ordering;
-use std::collections::{HashMap, HashSet};
-use std::sync::Arc;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct UiCharacterTemplate {

@@ -8,7 +8,7 @@ use base64::prelude::{BASE64_URL_SAFE, BASE64_URL_SAFE_NO_PAD};
 use base64::Engine;
 use bytes::Bytes;
 use http::StatusCode;
-use leptos::*;
+use leptos::prelude::*;
 use reqwest::Response;
 use serde_lite::{Deserialize, Serialize};
 use std::num::NonZeroU16;
@@ -29,7 +29,7 @@ pub enum GetBNetClientError {
 
 pub async fn get_bnet_client(
     region: Region,
-) -> Result<impl BattleNetClientAsync + Clone, GetBNetClientError> {
+) -> Result<impl BattleNetClientAsync + Clone + Send + Sync, GetBNetClientError> {
     let session = get_session().await.ok_or(GetBNetClientError::NoSession)?;
     let user = session
         .data()
@@ -44,6 +44,6 @@ pub async fn get_bnet_client(
 }
 
 pub async fn get_bnet_client_regionless(
-) -> Result<impl BattleNetClientAsync + Clone, GetBNetClientError> {
+) -> Result<impl BattleNetClientAsync + Clone + Send + Sync, GetBNetClientError> {
     get_bnet_client(Region::Europe).await
 }
