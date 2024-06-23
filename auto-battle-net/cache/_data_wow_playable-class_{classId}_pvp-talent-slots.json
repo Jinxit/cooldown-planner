@@ -1,0 +1,1 @@
+{"_links":{"self":{"href":"https://eu.api.blizzard.com/data/wow/playable-class/7/pvp-talent-slots?namespace=static-10.2.7_54366-eu"}},"talent_slots":[{"slot_number":1,"unlock_player_level":10},{"slot_number":2,"unlock_player_level":20},{"slot_number":3,"unlock_player_level":30},{"slot_number":4,"unlock_player_level":40}]}
