@@ -141,7 +141,7 @@ where
                     .expires(Some(
                         (SystemTime::now() + Duration::from_secs(24 * 60 * 60)).into(),
                     ))
-                    .finish()
+                    .build()
                     .to_string(),
             )
             .unwrap(),

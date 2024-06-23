@@ -12,8 +12,8 @@ impl crate::BattleNetRequest for UserInfoRequest {
             .unwrap()
     }
 
-    fn should_cache() -> bool {
-        false
+    fn is_user_dependent() -> bool {
+        true
     }
 }
 

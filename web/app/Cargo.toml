@@ -7,7 +7,11 @@ publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = ["hydrate"]
+default = ["hydrate", "render"]
+render = [
+    "dep:leptos_workers",
+    "dep:optimize-worker",
+]
 hydrate = [
     "leptos/hydrate",
     #"leptos_meta/hydrate",
@@ -21,70 +25,89 @@ ssr = [
     "leptos_router/ssr",
     #"leptos_query/ssr",
     "dep:axum",
+    "dep:battle-net-auth",
     "dep:leptos_axum",
     "dep:paseto-sessions",
     "dep:pasetors",
-    "dep:storage"
+    "dep:storage",
+    "storage/axum",
+    "storage/sqlite",
 ]
 
 [dependencies]
-auto-battle-net = { path = "../../auto-battle-net" }
+battle-net-auth = { path = "../battle-net-auth", optional = true }
 fight-domain = { path = "../../fight-domain" }
-optimize-worker = { path = "../optimize-worker" }
+i18n = { path = "../../i18n" }
+optimize-worker = { path = "../optimize-worker", optional = true  }
 optimizer = { path = "../../optimizer" }
 paseto-sessions = { path = "../paseto-sessions", optional = true }
+planner = { path = "../../planner" }
 storage = { path = "../storage", optional = true }
-leptos_workers = { path = "../../../leptos_workers/leptos_workers" }
+leptos_workers = { path = "../../../leptos_workers/leptos_workers", optional = true }
 
-async-trait = "0.1"
-axum = { version = "0.7", optional = true }
-base64 = "0.22"
-borrowme = "0.0"
-bytes = { version = "1.4", features = ["serde"] }
-cfg-if = "1.0"
-convert_case = "0.6"
-cookie = { version = "0.17" }
-deunicode = "1.3"
-futures-util = "0.3"
-futures-channel = "0.3"
-gloo-timers = { version = "0.3", features = ["futures"] }
-http = "1"
-js-sys = "0.3"
-itertools = "0.11"
-leptos = { workspace = true, features = ["serde"] }
+async-trait = { workspace = true }
+axum = { workspace = true, optional = true }
+base64 = { workspace = true }
+borrowme = { workspace = true }
+bytes = { workspace = true, features = ["serde"] }
+cfg-if = { workspace = true }
+convert_case = { workspace = true }
+cookie = { workspace = true }
+deunicode = { workspace = true }
+futures-util = { workspace = true }
+futures-channel = { workspace = true }
+gloo-timers = { workspace = true, features = ["futures"] }
+http = { workspace = true }
+js-sys = { workspace = true }
+itertools = { workspace = true }
+leptos = { workspace = true }
 leptos_axum = { workspace = true, optional = true }
 leptos_meta.workspace = true
 leptos_router.workspace = true
 #leptos-use = { path = "../../../leptos-use" }
 #leptos_query.workspace = true
-num-traits = "0.2"
-oauth2 = "4.3"
-ordered-float = "4.2"
-pasetors = { version = "0.6", features = ["paserk"], optional = true }
-reqwest = { version = "0.11", features = ["json", "blocking"] }
-serde = { version = "1.0", features = ["derive", "rc", "alloc"] }
-serde_json = { version = "1.0" }
-serde-lite = { version = "0.4" }
-serde-lite-derive = { version = "0.4" }
+nanoid = { workspace = true }
+num-traits = { workspace = true }
+oauth2 = { workspace = true }
+ordered-float = { workspace = true }
+pasetors = { workspace = true, features = ["paserk"], optional = true }
+rand = { workspace = true }
+reqwest = { workspace = true, features = ["json", "blocking"] }
+serde = { workspace = true, features = ["derive", "rc", "alloc"] }
+serde_json = { workspace = true }
+serde-lite = { workspace = true }
+serde-lite-derive = { workspace = true }
 server_fn.workspace = true
-strsim = "0.10"
-strum = "0.25"
-thiserror = "1.0"
-tracing = "0.1"
-url = { version = "2.3", features = ["serde"] }
-uuid = { version = "1.3", features = ["v4", "fast-rng", "macro-diagnostics", "serde", "js"] }
+strsim = { workspace = true }
+strum = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+url = { workspace = true, features = ["serde"] }
+uuid = { workspace = true, features = ["v4", "fast-rng", "macro-diagnostics", "serde", "js"] }
 wasm-bindgen = { workspace = true }
-wasm-bindgen-futures = "0.4"
+wasm-bindgen-futures = { workspace = true }
+
+[dependencies.auto-battle-net]
+path = "../../auto-battle-net"
+features = [
+    "game_data-journal-journal_encounter",
+    "game_data-journal-journal_instance",
+    "game_data-playable_class-playable_class",
+    "game_data-playable_class-playable_classes_index",
+    "game_data-playable_specialization-playable_specialization",
+    "game_data-playable_specialization-playable_specializations_index",
+    "game_data-realm-realm",
+    "game_data-realm-realms_index",
+    "game_data-realm-realms_index",
+    "profile-account_profile-account_profile_summary",
+    "profile-character_encounters-character_raids",
+    "profile-character_media-character_media_summary",
+    "profile-character_mythic_keystone_profile-character_mythic_keystone_profile_index",
+    "profile-character_profile-character_profile_status",
+    "profile-character_profile-character_profile_summary",
+    "profile-guild-guild_roster",
+]
 
 [dependencies.web-sys]
-version = "0.3"
-features = [
-    "Clipboard",
-    "console",
-    "HtmlElement",
-    "KeyboardEvent",
-    "Navigator",
-    "Node",
-    "Url",
-    "Window",
-]
+workspace = true
+features = ["Clipboard", "console", "HtmlElement", "KeyboardEvent", "Navigator", "Node", "ScrollIntoViewOptions", "ScrollLogicalPosition", "Url", "Window", "NodeList"]

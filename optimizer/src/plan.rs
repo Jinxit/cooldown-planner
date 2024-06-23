@@ -1,5 +1,6 @@
-use crate::Assignment;
 use fight_domain::{Attack, Character, Lookup, LookupKey};
+
+use crate::Assignment;
 
 #[derive(Debug, Clone)]
 pub struct Plan {
@@ -32,6 +33,6 @@ impl Plan {
     }
 
     pub fn unassign_cooldown(&mut self, assignment: &Assignment) {
-        self.assignments.take(assignment.lookup_key());
+        self.assignments.take(&assignment.lookup_key());
     }
 }

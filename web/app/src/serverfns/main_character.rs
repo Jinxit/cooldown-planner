@@ -1,25 +1,34 @@
 use std::time::Duration;
+
 //use cached::proc_macro::cached;
 use convert_case::{Case, Casing};
 use futures_util::future::{join_all, try_join_all};
 use futures_util::StreamExt;
 use itertools::Itertools;
-use server_fn::error::NoCustomError;
-use crate::context::{PlannerRealm, PlannerUser};
-use auto_battle_net::profile::account_profile::account_profile_summary::AccountProfileSummaryRequest;
-use auto_battle_net::{Locale, Region};
 use leptos::prelude::*;
+use leptos::server_fn::codec::{Cbor, GetUrl, Json, PostUrl};
 use num_traits::Zero;
 use ordered_float::NotNan;
 use serde::{Deserialize, Serialize};
+use server_fn::error::NoCustomError;
 use strum::IntoEnumIterator;
-use tracing::{error, instrument};
+use tracing::{error, instrument, warn};
+
+use auto_battle_net::BattleNetClientAsync;
 use auto_battle_net::game_data::realm::realm::RealmRequest;
+use auto_battle_net::profile::account_profile::account_profile_summary::AccountProfileSummaryRequest;
 use auto_battle_net::profile::character_encounters::character_raids::CharacterRaidsRequest;
 use auto_battle_net::profile::character_mythic_keystone_profile::character_mythic_keystone_profile_index::CharacterMythicKeystoneProfileIndexRequest;
 use auto_battle_net::profile::character_profile::character_profile_summary::CharacterProfileSummaryRequest;
-use auto_battle_net::BattleNetClientAsync;
-use leptos::server_fn::codec::{GetUrl, PostUrl, Json, Cbor};
+use i18n::{Locale, LocalizedString, Region};
+use planner::PlannerRealm;
+
+#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
+pub struct PlannerMainCharacter {
+    pub name: String,
+    pub realm: PlannerRealm,
+    pub guild: Option<String>,
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
 pub struct CharacterDetails {
@@ -38,11 +47,10 @@ pub struct CharacterDetails {
 #[instrument]
 #[server(CurrentMainCharacter, "/bnet", input = GetUrl, output = Json)]
 pub async fn current_main_character() -> Result<CharacterDetails, ServerFnError> {
-    use crate::serverfns::util::{get_bnet_client, get_session, get_storage};
+    use crate::serverfns::util::{get_bnet_client, get_session, get_storage, ClientType};
 
     let user = get_session()
-        .await
-        .ok_or_else(|| ServerFnError::MissingArg::<NoCustomError>("session".to_string()))?
+        .await?
         .data()
         .user
         .clone()
@@ -56,7 +64,7 @@ pub async fn current_main_character() -> Result<CharacterDetails, ServerFnError>
             .ok_or_else(|| ServerFnError::Request::<NoCustomError>("No characters".to_string()))
     }
 
-    let storage = get_storage().await;
+    let storage = get_storage().await?;
     storage
         .try_fetch(
             &format!("MainCharacter/{}", user.id),
@@ -73,19 +81,20 @@ pub async fn set_main_character(
     name: String,
     realm: PlannerRealm,
 ) -> Result<(), ServerFnError> {
-    use crate::serverfns::util::{get_bnet_client, get_session, get_storage};
+    use crate::serverfns::util::{get_bnet_client, get_session, get_storage, ClientType};
 
     let user = get_session()
-        .await
-        .ok_or_else(|| ServerFnError::MissingArg::<NoCustomError>("session".to_string()))?
+        .await?
         .data()
         .user
         .clone()
         .ok_or_else(|| ServerFnError::MissingArg::<NoCustomError>("user".to_string()))?;
 
-    let storage = get_storage().await;
+    let storage = get_storage().await?;
 
-    let details = character_details(region, name, realm).await?;
+    let client = get_bnet_client(region, ClientType::AllowFallback).await?;
+
+    let details = character_details(region, client, name, realm).await?;
     storage
         .put(
             &format!("MainCharacter/{}", user.id),
@@ -100,32 +109,42 @@ pub async fn set_main_character(
 #[instrument]
 #[cfg(feature = "ssr")]
 async fn all_characters_sorted(user_id: u64) -> Result<Vec<CharacterDetails>, ServerFnError> {
-    use crate::serverfns::util::get_bnet_client;
+    use crate::serverfns::util::{get_bnet_client, ClientType};
 
-    let futures = Region::iter().map(|r| async move {
-        let client = get_bnet_client(r).await?;
-        let account_profile = client.call_async(AccountProfileSummaryRequest {}).await?;
+    let mut region_clients = vec![];
+    for region in Region::iter() {
+        region_clients.push((region, get_bnet_client(region, ClientType::UserOnly).await?));
+    }
 
-        Result::<_, ServerFnError>::Ok(
-            join_all(
-                account_profile
-                    .wow_accounts
-                    .iter()
-                    .flat_map(|acc| acc.characters.iter())
-                    .map(|c| async move {
-                        let realm = PlannerRealm {
-                            name: c.realm.name.clone(),
-                            slug: c.realm.slug.clone(),
-                        };
+    let futures = region_clients
+        .into_iter()
+        .map(|(region, client)| async move {
+            let account_profile = client.call_async(AccountProfileSummaryRequest {}).await?;
 
-                        character_details(r, c.name.clone(), realm.clone()).await
-                    }),
+            Result::<_, ServerFnError>::Ok(
+                join_all(
+                    account_profile
+                        .wow_accounts
+                        .iter()
+                        .flat_map(|acc| acc.characters.iter())
+                        .map(|c| {
+                            let client = client.clone();
+                            async move {
+                                let realm = PlannerRealm {
+                                    name: c.realm.name.clone(),
+                                    slug: c.realm.slug.clone(),
+                                };
+
+                                character_details(region, client, c.name.clone(), realm.clone())
+                                    .await
+                            }
+                        }),
+                )
+                .await
+                .into_iter()
+                .filter_map(|p| p.ok()),
             )
-            .await
-            .into_iter()
-            .filter_map(|p| p.ok()),
-        )
-    });
+        });
 
     let mut characters: Vec<CharacterDetails> = join_all(futures)
         .await
@@ -137,16 +156,14 @@ async fn all_characters_sorted(user_id: u64) -> Result<Vec<CharacterDetails>, Se
     Ok(characters)
 }
 
-#[instrument]
+#[instrument(skip(client))]
 #[cfg(feature = "ssr")]
 async fn character_details(
     region: Region,
+    client: impl BattleNetClientAsync + Clone + Send + Sync,
     name: String,
     realm: PlannerRealm,
 ) -> Result<CharacterDetails, ServerFnError> {
-    use crate::serverfns::util::get_bnet_client;
-
-    let client = get_bnet_client(region).await?;
     let character_slug = name.to_case(Case::Kebab);
 
     let current_raid_progress = async {

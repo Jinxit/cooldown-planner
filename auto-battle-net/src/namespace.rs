@@ -1,6 +1,8 @@
-use crate::region::Region;
 use std::fmt::{Display, Formatter};
+
 use strum_macros::{AsRefStr, Display};
+
+use crate::Region;
 
 #[derive(Copy, Clone, Debug)]
 pub struct Namespace {

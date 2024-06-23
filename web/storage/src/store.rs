@@ -1,52 +1,76 @@
-use async_trait::async_trait;
-use serde_json::Value;
 use std::any::TypeId;
+use std::fmt::Debug;
 use std::future::Future;
 use std::marker::PhantomData;
 use std::pin::Pin;
 use std::sync::Arc;
 use std::time::Duration;
 
-pub struct Store<T> {
-    connection: Arc<dyn ConnectionDyn>,
-    _phantom: PhantomData<T>,
-}
+use async_trait::async_trait;
+use key_mutex::tokio::KeyRwLock;
+use serde::de::DeserializeOwned;
+use serde::Serialize;
+use serde_json::Value;
 
-#[derive(Clone, Debug)]
+use crate::Keyable;
+
+#[derive(Clone, Debug, Hash, Eq, PartialEq)]
 pub struct StoreKey {
     pub(crate) key: String,
     pub(crate) key_type: TypeId,
     pub(crate) value_type: TypeId,
+    _phantom: PhantomData<()>,
 }
 
-impl<T> Store<T> {
+impl StoreKey {
+    pub fn new<K, V>(key: &impl Keyable) -> Self
+    where
+        K: Keyable + 'static,
+        V: Serialize + DeserializeOwned + Send + Sync + 'static,
+    {
+        StoreKey {
+            key: key.to_key(),
+            key_type: TypeId::of::<K>(),
+            value_type: TypeId::of::<V>(),
+            _phantom: PhantomData,
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct Store {
+    connection: Arc<dyn ConnectionDyn>,
+    locks: KeyRwLock<StoreKey, ()>,
+}
+
+impl Debug for Store {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Store").finish()
+    }
+}
+
+impl Store {
     pub fn new(connection_holder: &ConnectionHolder) -> Self {
         Self {
             connection: connection_holder.connection.clone(),
-            _phantom: PhantomData,
+            locks: KeyRwLock::new(),
         }
     }
 
     pub async fn get(&self, key: &StoreKey) -> Option<Value> {
+        let _lock = self.locks.read(key.clone()).await;
         let fut = self.connection.get(key);
         fut.await
     }
 
     pub async fn put(&self, key: &StoreKey, value: Value, ttl: Option<&Duration>) {
+        let _lock = self.locks.write(key.clone()).await;
         self.connection.put(key, value, ttl).await
     }
 
     pub async fn clear(&self, key: &StoreKey) {
+        let _lock = self.locks.write(key.clone()).await;
         self.connection.delete(key).await
-    }
-}
-
-impl<T> Clone for Store<T> {
-    fn clone(&self) -> Self {
-        Self {
-            connection: self.connection.clone(),
-            _phantom: PhantomData,
-        }
     }
 }
 

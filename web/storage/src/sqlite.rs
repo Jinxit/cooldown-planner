@@ -33,6 +33,7 @@ impl SqLiteConnection {
             )
             .await?;
 
+        /*
         #[cfg(debug_assertions)]
         sqlx::query!("DELETE FROM _sqlx_migrations;")
             .execute(&pool)
@@ -42,6 +43,8 @@ impl SqLiteConnection {
         sqlx::query!("DROP TABLE IF EXISTS store;")
             .execute(&pool)
             .await?;
+
+         */
 
         sqlx::migrate!().run(&pool).await?;
 

@@ -1,10 +1,16 @@
-mod assignment;
 pub use assignment::*;
-mod fight_model;
+#[cfg(feature = "algorithms")]
 pub use fight_model::*;
-mod optimizer;
+#[cfg(feature = "algorithms")]
 pub use optimizer::*;
+pub use plan::*;
+
+mod assignment;
+#[cfg(feature = "algorithms")]
+mod fight_model;
+#[cfg(feature = "algorithms")]
+mod optimizer;
+#[cfg(feature = "algorithms")]
 pub mod optimizers;
 mod plan;
-pub use plan::*;
 pub mod score_functions;

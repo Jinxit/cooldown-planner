@@ -6,21 +6,25 @@ use itertools::Itertools;
 use leptos::prelude::*;
 //use leptos_use::{signal_throttled, use_throttle_fn, use_throttle_fn_with_arg, watch_throttled};
 use leptos_workers::executors::AbortHandle;
+use tracing::{info, warn};
 use wasm_bindgen_futures::spawn_local;
+use fight_domain::{Character, Lookup};
 
 use optimize_worker::{OptimizeRequest, OptimizeWorkerCallback};
 
-use crate::context::with_workers;
-use crate::reactive::async_ext::ReadyOrReloading;
+use crate::context::{use_planner, with_workers};
 use crate::reactive::memo::Memoize;
 
-use super::ui_state::UiState;
 
 pub fn use_optimizer() {
-    let ui_state = use_context::<UiState>().unwrap();
+    let planner = use_planner();
+    let planning = RwSignal::new(false);
 
     let request = {
         let request_id = Arc::new(Mutex::new(0_usize));
+        let characters: Memo<Lookup<Character>> = Memo::new(move |_| planner.read().characters().iter().cloned().map(Into::into).collect());
+        let attacks = Memo::new(move |_| planner.read().attacks().clone());
+        let locked_assignments = Memo::new(move |_| planner.read().locked_assignments().clone());
         Memo::new(move |_| {
             let mut request_id = request_id.lock().unwrap();
             *request_id += 1;
@@ -28,9 +32,9 @@ pub fn use_optimizer() {
             warn!("next_request_id {}", next_request_id);
             OptimizeRequest {
                 request_id: next_request_id,
-                characters: ui_state.characters(),
-                attacks: ui_state.attacks(),
-                initial_assignments: ui_state.locked_assignments(),
+                characters: characters.get(),
+                attacks: attacks.get(),
+                initial_assignments: locked_assignments.get(),
             }
         })
     };
@@ -40,7 +44,7 @@ pub fn use_optimizer() {
 
     Effect::new(
         move |prev_abort_handle: Option<AbortHandle<OptimizeWorkerCallback>>| {
-            ui_state.set_planning(true);
+            planning.set(true);
             let request: OptimizeRequest = throttled_request.get();
             let request_id = request.request_id;
             {
@@ -48,13 +52,15 @@ pub fn use_optimizer() {
                 *response_id = request_id;
             }
             let response_id = response_id.clone();
-            with_workers(move |workers /* PoolExecutor */| {
+
+            with_workers(move |workers| {
                 let (new_abort_handle, future) = workers
                     .stream_callback(request, move |response| {
                         // untracked because a new request has already been triggered, this output should just be abandoned
                         if response.request_id >= *response_id.lock().unwrap() {
-                            warn!("updating for request_id {}", response.request_id);
-                            ui_state.update_assignment_suggestions(response.assignments);
+                            planner.update(|planner| {
+                                planner.replace_assignment_suggestions(response.assignments);
+                            })
                         }
                     })
                     .expect("worker creation failed");
@@ -64,49 +70,11 @@ pub fn use_optimizer() {
                 }
                 spawn_local(async move {
                     future.await;
-                    ui_state.set_planning(false);
+                    planning.set(false);
                     warn!("done with request_id {}", request_id);
                 });
                 new_abort_handle
             })
         },
     );
-}
-
-mod future {
-    use std::future::Future;
-    use std::pin::Pin;
-    use std::task::{Context, Poll};
-
-    use futures_channel::oneshot;
-    use wasm_bindgen::UnwrapThrowExt;
-
-    pub fn request_animation_frame() -> impl Future {
-        RequestAnimationFrameFuture::new()
-    }
-
-    #[derive(Debug)]
-    #[must_use = "futures do nothing unless polled or spawned"]
-    struct RequestAnimationFrameFuture {
-        rx: oneshot::Receiver<()>,
-    }
-
-    impl RequestAnimationFrameFuture {
-        fn new() -> RequestAnimationFrameFuture {
-            let (tx, rx) = oneshot::channel();
-            leptos::prelude::request_animation_frame(move || {
-                let _ = tx.send(());
-            });
-
-            Self { rx }
-        }
-    }
-
-    impl Future for RequestAnimationFrameFuture {
-        type Output = ();
-
-        fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
-            Future::poll(Pin::new(&mut self.rx), cx).map(|t| t.unwrap_throw())
-        }
-    }
 }

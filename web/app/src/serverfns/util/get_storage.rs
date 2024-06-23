@@ -5,11 +5,7 @@ use std::fmt::Display;
 use std::time::Duration;
 use storage::Keyable;
 
-pub async fn get_storage<
-    K: Keyable + Send + 'static,
-    V: Serialize + DeserializeOwned + Send + Sync + Clone + 'static,
->() -> storage::Storage<K, V> {
+pub async fn get_storage() -> Result<storage::Storage, ServerFnError> {
     extract()
         .await
-        .unwrap()
 }

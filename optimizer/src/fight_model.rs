@@ -149,9 +149,9 @@ impl OptModel for FightModel {
             }
 
             let mut plan = current_solution.clone();
-            let assignment: Option<Assignment> = options.into_iter().choose(&mut rng);
+            let assignment = options[..].choose(&mut rng);
 
-            let score = match &assignment {
+            let score = match assignment {
                 Some(assignment) => {
                     plan.assign_cooldown(assignment.clone());
                     self.evaluate_solution(&plan)
@@ -159,13 +159,17 @@ impl OptModel for FightModel {
                 None => NotNan::new(10000000000.0).unwrap(),
             };
 
-            (plan, assignment.map(|assignment| (true, assignment)), score)
+            (
+                plan,
+                assignment.map(|assignment| (true, assignment.clone())),
+                score,
+            )
         } else {
             let mut plan = current_solution.clone();
             let assignment: Option<Assignment> = current_solution
                 .assignments
                 .iter()
-                .filter(|assignment| assignment.state != AssignmentState::Forced)
+                .filter(|assignment| assignment.state != AssignmentState::Locked)
                 .choose(&mut rng)
                 .cloned();
 

@@ -13,25 +13,21 @@ pub async fn battle_net_login_url(return_url: Url) -> Result<Option<Url>, Server
     };
     use paseto_sessions::Session;
 
-    let session = get_session()
-        .await
-        .expect("all requests should have a session");
+    let session = get_session().await?;
 
     if session.data().user.is_some() {
         return Ok(None);
     }
 
     let oauth_client = BasicClient::new(
-        ClientId::new(std::env::var("BNET_CLIENT_ID").unwrap()),
-        Some(ClientSecret::new(
-            std::env::var("BNET_CLIENT_SECRET").unwrap(),
-        )),
-        AuthUrl::new("https://oauth.battle.net/authorize".to_string()).unwrap(),
-        Some(TokenUrl::new("https://oauth.battle.net/token".to_string()).unwrap()),
+        ClientId::new(std::env::var("BNET_CLIENT_ID")?),
+        Some(ClientSecret::new(std::env::var("BNET_CLIENT_SECRET")?)),
+        AuthUrl::new("https://oauth.battle.net/authorize".to_string())?,
+        Some(TokenUrl::new("https://oauth.battle.net/token".to_string())?),
     )
-    .set_redirect_uri(
-        RedirectUrl::new("http://localhost:3000/bnet/login-callback".to_string()).unwrap(),
-    );
+    .set_redirect_uri(RedirectUrl::new(
+        "http://localhost:3000/bnet/login-callback".to_string(),
+    )?);
 
     // Generate a PKCE challenge.
     let (pkce_challenge, _pkce_verifier) = PkceCodeChallenge::new_random_sha256();

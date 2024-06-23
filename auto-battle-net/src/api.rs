@@ -1,9 +1,11 @@
-use crate::region::Region;
+use std::fmt::Debug;
+use std::hash::Hash;
+
 use http::Uri;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
-use std::fmt::Debug;
-use std::hash::Hash;
+
+use crate::Region;
 
 pub trait BattleNetRequest:
     Serialize + DeserializeOwned + Clone + Debug + PartialEq + Hash
@@ -11,5 +13,5 @@ pub trait BattleNetRequest:
     type Response: Serialize + DeserializeOwned + Clone + Debug + PartialEq + Hash;
 
     fn uri(&self, region: Region) -> Uri;
-    fn should_cache() -> bool;
+    fn is_user_dependent() -> bool;
 }

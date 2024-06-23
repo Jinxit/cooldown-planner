@@ -1,7 +1,7 @@
 use wasm_bindgen::prelude::wasm_bindgen;
 
 use app_package::*;
-use leptos::prelude::*;
+use tracing::info;
 use tracing_subscriber::fmt;
 use tracing_subscriber_wasm::MakeConsoleWriter;
 
@@ -17,7 +17,7 @@ pub fn hydrate() {
         .init();
 
     if decode_request(web_sys::window().unwrap()) != Some("no-hydrate".to_string()) {
-        log!("hydrate mode - hydrating");
+        info!("hydrate mode - hydrating");
 
         // there are now distinct functions for hydrating and CSR mounting, as opposed to features
         // changing the behavior

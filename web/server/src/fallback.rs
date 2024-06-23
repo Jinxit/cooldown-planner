@@ -1,5 +1,4 @@
 use app_package::session::CooldownPlannerSession;
-use app_package::{App, AppProps};
 use auto_battle_net::game_data::realm::realms_index::Realms;
 use axum::extract::State;
 use axum::response::Response as AxumResponse;
@@ -29,7 +28,7 @@ pub async fn file_and_error_handler(
     if res.status() == StatusCode::OK {
         res.into_response()
     } else {
-        let handler = leptos_axum::render_app_to_stream(options.to_owned(), move || {
+        let handler = leptos_axum::render_app_to_stream(move || {
             //view! { <App/> }
             view! { "404" }
         });

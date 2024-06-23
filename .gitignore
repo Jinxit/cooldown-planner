@@ -1,4 +1,8 @@
 /target
+/target_csr
 .env
 node_modules
 /web/css/output.css
+/auto-battle-net/cache
+package-lock.json
+/web/front-csr/dist

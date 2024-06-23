@@ -1,23 +1,21 @@
-use auto_battle_net::game_data::spell::spell_media::SpellMediaRequest;
-use auto_battle_net::{BattleNetClientAsync, BattleNetRequest, Region, ReqwestBattleNetClient};
 use axum::extract::Path;
 use axum::response::IntoResponse;
-use axum::Extension;
-use battle_net_auth::OAuthToken;
-//use cached::proc_macro::cached;
-use http::request;
-use std::convert::Infallible;
-use std::time::Duration;
 use url::Url;
+
+use auto_battle_net::{BattleNetClientAsync, ReqwestBattleNetClient};
+//use cached::proc_macro::cached;
+use auto_battle_net::game_data::spell::spell_media::SpellMediaRequest;
+use battle_net_auth::OAuthToken;
+use i18n::Region;
 
 #[axum::debug_handler]
 pub async fn spell_icon(Path(spell_id): Path<i64>, access_token: OAuthToken) -> impl IntoResponse {
     async fn inner(access_token: OAuthToken, spell_id: i64) -> Option<Url> {
         let request = SpellMediaRequest { spell_id };
-        let token = access_token.expose_secret().to_string();
+        let token = access_token.expose_secret();
         let icon_url = ReqwestBattleNetClient {
             region: Region::Europe,
-            access_token: token,
+            access_token: token.clone(),
         }
         .call_async(request)
         .await

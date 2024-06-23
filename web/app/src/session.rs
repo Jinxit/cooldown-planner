@@ -1,5 +1,7 @@
+use ordered_float::NotNan;
 use serde::{Deserialize, Serialize};
 use url::Url;
+use auto_battle_net::BattleNetAccessToken;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, Eq, PartialEq)]
 pub struct CooldownPlannerSession {
@@ -17,5 +19,5 @@ pub struct CooldownPlannerReturnState {
 pub struct BattleNetUser {
     pub id: u64,
     pub battletag: String,
-    pub access_token: String,
+    pub access_token: BattleNetAccessToken,
 }

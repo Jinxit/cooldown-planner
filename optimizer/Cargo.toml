@@ -6,15 +6,23 @@ publish = false
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+default = ["algorithms"]
+algorithms = [
+    #"dep:genetic_algorithm",
+    #"dep:genevo",
+    "dep:localsearch"
+]
+
 [dependencies]
 fight-domain = { path = "../fight-domain" }
 
 #dogs = "1.3"
-genetic_algorithm = "0.7"
-genevo = "0.7"
-localsearch = "0.12"
-num-traits = "0.2"
-ordered-float = "4.2"
-rand = "0.8"
-serde = { version = "1.0", features = ["derive"] }
-uuid = { version = "1.3", features = ["v4", "fast-rng", "macro-diagnostics", "serde", "js"] }
+#genetic_algorithm = { workspace = true, optional = true }
+#genevo = { workspace = true, optional = true }
+localsearch = { workspace = true, optional = true }
+num-traits = { workspace = true }
+ordered-float = { workspace = true }
+rand = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+uuid = { workspace = true, features = ["v4", "fast-rng", "macro-diagnostics", "serde", "js"] }

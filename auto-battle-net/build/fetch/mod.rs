@@ -1,16 +1,18 @@
-use crate::infer::JsonMap;
-use crate::resource_json::Method;
-use governor::clock::DefaultClock;
-use governor::state::{InMemoryState, NotKeyed};
-use governor::{Jitter, Quota, RateLimiter};
-use lazy_static::lazy_static;
-use reqwest::Url;
+use std::{env, fs};
 use std::collections::HashMap;
 use std::num::NonZeroU32;
 use std::path::PathBuf;
 use std::str::FromStr;
 use std::time::Duration;
-use std::{env, fs};
+
+use governor::{Jitter, Quota, RateLimiter};
+use governor::clock::DefaultClock;
+use governor::state::{InMemoryState, NotKeyed};
+use lazy_static::lazy_static;
+use reqwest::Url;
+
+use crate::infer::JsonMap;
+use crate::resource_json::Method;
 
 type DefaultRateLimiter = RateLimiter<NotKeyed, InMemoryState, DefaultClock>;
 lazy_static! {
@@ -60,16 +62,13 @@ pub async fn fetch(base_url: Url, method: &Method, access_token: &str) -> JsonMa
     .into_iter()
     .collect();
 
-    let out_dir = env::var_os("OUT_DIR").unwrap();
+    let _out_dir = env::var_os("OUT_DIR").unwrap();
+    let manifest_dir = env::var_os("CARGO_MANIFEST_DIR").unwrap();
     let cache_key = method.path.replace('/', "_");
-    let cache_path = PathBuf::from(out_dir)
+    let cache_path = PathBuf::from(manifest_dir)
         .join("cache")
         .join(cache_key)
         .with_extension("json");
-
-    RATE_LIMITER
-        .until_ready_with_jitter(Jitter::up_to(Duration::from_secs(2)))
-        .await;
 
     if cache_path.exists() {
         serde_json::from_str(&fs::read_to_string(cache_path).unwrap()).unwrap()
@@ -104,6 +103,10 @@ pub async fn fetch(base_url: Url, method: &Method, access_token: &str) -> JsonMa
             );
         }
         let url = base_url.join(&url).unwrap();
+
+        RATE_LIMITER
+            .until_ready_with_jitter(Jitter::up_to(Duration::from_secs(2)))
+            .await;
 
         let client = reqwest::Client::new();
         let request = client

@@ -1,0 +1,116 @@
+[package]
+name = "app-package2"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+default = ["hydrate"]
+hydrate = [
+    "leptos/hydrate",
+    "leptos_meta/hydrate",
+    "leptos_router/hydrate",
+    #"leptos_query/hydrate"
+]
+ssr = [
+    "auto-battle-net/reqwest",
+    "leptos/ssr",
+    "leptos_meta/ssr",
+    "leptos_router/ssr",
+    "leptos-use/ssr",
+    #"leptos_query/ssr",
+    "dep:axum",
+    "dep:leptos_axum",
+    "dep:paseto-sessions",
+    "dep:pasetors",
+    "dep:storage",
+    "storage/axum",
+    "storage/sqlite",
+]
+
+[dependencies]
+fight-domain = { path = "../../fight-domain" }
+i18n = { path = "../../i18n" }
+optimize-worker = { path = "../optimize-worker" }
+optimizer = { path = "../../optimizer" }
+paseto-sessions = { path = "../paseto-sessions", optional = true }
+planner = { path = "../../planner" }
+storage = { path = "../storage", optional = true }
+leptos_workers = { path = "../../../leptos_workers/leptos_workers" }
+
+async-trait = { workspace = true }
+axum = { workspace = true, optional = true }
+base64 = { workspace = true }
+borrowme = { workspace = true }
+bytes = { workspace = true, features = ["serde"] }
+cfg-if = { workspace = true }
+convert_case = { workspace = true }
+cookie = { workspace = true }
+deunicode = { workspace = true }
+futures-util = { workspace = true }
+futures-channel = { workspace = true }
+gloo-timers = { workspace = true, features = ["futures"] }
+http = { workspace = true }
+js-sys = { workspace = true }
+itertools = { workspace = true }
+
+leptos = { version = "0.6", features = ["serde", "tracing", "nightly"] }
+leptos_meta = { version = "0.6" }
+leptos_router = { version = "0.6", features = [] }
+leptos_axum = { version = "0.6" }
+leptos-use = "0.10"
+#leptos_query.workspace = true
+num-traits = { workspace = true }
+oauth2 = { workspace = true }
+ordered-float = { workspace = true }
+pasetors = { workspace = true, features = ["paserk"], optional = true }
+reqwest = { workspace = true, features = ["json", "blocking"] }
+serde = { workspace = true, features = ["derive", "rc", "alloc"] }
+serde_json = { workspace = true }
+serde-lite = { workspace = true }
+serde-lite-derive = { workspace = true }
+server_fn.workspace = true
+strsim = { workspace = true }
+strum = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+url = { workspace = true, features = ["serde"] }
+uuid = { workspace = true, features = ["v4", "fast-rng", "macro-diagnostics", "serde", "js"] }
+wasm-bindgen = { workspace = true }
+wasm-bindgen-futures = { workspace = true }
+
+[dependencies.auto-battle-net]
+path = "../../auto-battle-net"
+features = [
+    "game_data-journal-journal_encounter",
+    "game_data-journal-journal_instance",
+    "game_data-playable_class-playable_class",
+    "game_data-playable_class-playable_classes_index",
+    "game_data-playable_specialization-playable_specialization",
+    "game_data-playable_specialization-playable_specializations_index",
+    "game_data-realm-realm",
+    "game_data-realm-realms_index",
+    "game_data-realm-realms_index",
+    "profile-account_profile-account_profile_summary",
+    "profile-character_encounters-character_raids",
+    "profile-character_media-character_media_summary",
+    "profile-character_mythic_keystone_profile-character_mythic_keystone_profile_index",
+    "profile-character_profile-character_profile_status",
+    "profile-character_profile-character_profile_summary",
+    "profile-guild-guild_roster",
+]
+
+[dependencies.web-sys]
+workspace = true
+features = [
+    "Clipboard",
+    "console",
+    "HtmlElement",
+    "KeyboardEvent",
+    "Navigator",
+    "Node",
+    "Url",
+    "Window"
+]

@@ -1,15 +1,14 @@
-use crate::api::ui_character::UiCharacter;
-use crate::context::{PlannerContext, PlannerRealm};
-use crate::misc::localized_string_with_context::LocalizedStringWithContext;
-use auto_battle_net::profile::character_media::character_media_summary::CharacterMediaSummaryRequest;
-use auto_battle_net::{BattleNetClientAsync, Locale, Region};
 //use cached::proc_macro::cached;
 use convert_case::{Case, Casing};
 use leptos::prelude::*;
+use leptos::server_fn::codec::{Cbor, GetUrl, Json};
 use server_fn::error::NoCustomError;
 use tracing::{error, instrument, warn};
 use url::Url;
-use leptos::server_fn::codec::{GetUrl, Json, Cbor};
+
+use auto_battle_net::BattleNetClientAsync;
+use auto_battle_net::profile::character_media::character_media_summary::CharacterMediaSummaryRequest;
+use i18n::Region;
 
 #[instrument]
 #[server(prefix = "/bnet", input = GetUrl, output = Cbor)]
@@ -18,14 +17,14 @@ pub async fn character_avatar(
     realm_slug: String,
     region: Region,
 ) -> Result<Url, ServerFnError> {
-    use crate::serverfns::util::get_bnet_client;
+    use crate::serverfns::util::{get_bnet_client, ClientType};
 
     async fn inner(
         character_name: String,
         realm_slug: String,
         region: Region,
     ) -> Result<Url, ServerFnError> {
-        let client = get_bnet_client(region).await?;
+        let client = get_bnet_client(region, ClientType::AllowFallback).await?;
         let summary = client
             .call_async(CharacterMediaSummaryRequest {
                 realm_slug,

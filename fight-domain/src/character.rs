@@ -25,7 +25,7 @@ impl Display for CharacterUuid {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct Character {
     pub uuid: CharacterUuid,
     pub name: String,
@@ -35,7 +35,7 @@ pub struct Character {
 impl LookupKey for Character {
     type Key = CharacterUuid;
 
-    fn lookup_key(&self) -> &Self::Key {
-        &self.uuid
+    fn lookup_key(&self) -> Self::Key {
+        self.uuid
     }
 }

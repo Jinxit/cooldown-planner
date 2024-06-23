@@ -1,18 +1,20 @@
-use crate::attack_timer::AttackTimer;
-use crate::serde_not_nan::{deserialize_not_nan, serialize_not_nan};
-use crate::LookupKey;
-use ordered_float::NotNan;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
+
+use ordered_float::NotNan;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+
+use crate::attack_timer::AttackTimer;
+use crate::LookupKey;
+use crate::serde_not_nan::{deserialize_not_nan, serialize_not_nan};
 
 #[derive(Serialize, Deserialize, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct AttackUuid(Uuid);
 
 impl AttackUuid {
-    pub fn new(uuid: &'static str) -> AttackUuid {
-        Self(Uuid::parse_str(uuid).unwrap())
+    pub const fn new(uuid: Uuid) -> AttackUuid {
+        Self(uuid)
     }
 }
 
@@ -39,8 +41,8 @@ pub struct Attack {
 impl LookupKey for Attack {
     type Key = AttackUuid;
 
-    fn lookup_key(&self) -> &Self::Key {
-        &self.uuid
+    fn lookup_key(&self) -> Self::Key {
+        self.uuid
     }
 }
 

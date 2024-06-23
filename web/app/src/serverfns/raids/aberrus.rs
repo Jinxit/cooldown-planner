@@ -27,8 +27,7 @@ pub struct AberrusInfo {
 #[instrument]
 #[server(prefix = "/bnet", input = GetUrl, output = Json)]
 pub async fn aberrus() -> Result<AberrusInfo, ServerFnError> {
-    use crate::serverfns::util::try_fetch_cached;
-
+    use crate::serverfns::util::get_storage;
     async fn inner() -> Result<AberrusInfo, ServerFnError> {
         let instance = instance_info(1208);
         let kazzara = encounter_info(2522);
@@ -79,5 +78,6 @@ pub async fn aberrus() -> Result<AberrusInfo, ServerFnError> {
         })
     }
 
-    try_fetch_cached(&("Aberrus".to_string()), Duration::from_secs(24 * 60 * 60), inner).await
+    let storage = get_storage().await?;
+    storage.try_fetch(&("Aberrus".to_string()), Duration::from_secs(24 * 60 * 60), inner).await
 }

@@ -1,10 +1,15 @@
-use crate::OAuthToken;
+use std::convert::Infallible;
+
+use axum::Extension;
 use axum::extract::FromRequestParts;
 use axum::http::request::Parts;
-use axum::Extension;
-//use cached::proc_macro::cached;
+use cached::proc_macro::cached;
 use redact::Secret;
-use std::convert::Infallible;
+use serde::Deserialize;
+use tracing::info;
+use auto_battle_net::BattleNetAccessToken;
+
+use crate::OAuthToken;
 
 #[derive(Clone, Debug)]
 struct OAuthCredentials {
@@ -46,18 +51,22 @@ where
     }
 }
 
-//#[cached(time = 3600)]
+#[derive(Clone, Deserialize)]
+struct OAuthTokenRaw {
+    access_token: String,
+}
+
+#[cached(sync_writes = true, time = 3600)]
 async fn bnet_access_token(client_id: String, client_secret: String) -> OAuthToken {
-    let access_token: OAuthToken = {
-        reqwest::Client::new()
-            .post("https://oauth.battle.net/token?grant_type=client_credentials")
-            .basic_auth(client_id, Some(client_secret))
-            .send()
-            .await
-            .unwrap()
-            .json()
-            .await
-            .unwrap()
-    };
-    access_token
+    info!("Fetching OAuth token");
+    let raw: OAuthTokenRaw = reqwest::Client::new()
+        .post("https://oauth.battle.net/token?grant_type=client_credentials")
+        .basic_auth(client_id, Some(client_secret))
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    OAuthToken::new(BattleNetAccessToken::ClientCredentials(raw.access_token))
 }

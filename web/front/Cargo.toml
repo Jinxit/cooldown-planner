@@ -14,11 +14,11 @@ hydrate = ["leptos/hydrate"]
 app-package = { path = "../app" }
 
 #console_log = "1.0"
-console_error_panic_hook = "0.1"
-leptos = { workspace = true, features = ["serde", "hydrate"] }
-log = "0.4"
-tracing = "0.1"
-tracing-subscriber = "0.3"
-tracing-subscriber-wasm = "0.1"
+console_error_panic_hook = { workspace = true }
+leptos = { workspace = true, features = ["hydrate"] }
+log = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+tracing-subscriber-wasm = { workspace = true }
 wasm-bindgen = { workspace = true }
-web-sys = { version = "0.3", features = ["Window"] }
+web-sys = { workspace = true, features = ["Window"] }

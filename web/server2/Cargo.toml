@@ -1,0 +1,55 @@
+[package]
+name = "server-package"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+lambda = ["lambda-web"]
+
+[dependencies]
+app-package = { path = "../app", default-features = false, features = ["ssr"] }
+auto-battle-net = { path = "../../auto-battle-net", features = [
+    "reqwest",
+    "game_data-spell-spell_media",
+] }
+battle-net-auth = { path = "../battle-net-auth", features = ["axum"] }
+i18n = { path = "../../i18n" }
+paseto-sessions = { path = "../paseto-sessions" }
+storage = { path = "../storage", features = ["axum", "sqlite"] }
+
+leptos = { version = "0.6", features = ["serde", "ssr"] }
+leptos_meta = { version = "0.6", features = ["ssr"] }
+leptos_router = { version = "0.6", features = ["ssr"] }
+leptos_dom = { version = "0.6", features = ["ssr"] }
+leptos_axum = { version = "0.6" }
+#leptos_query.workspace = true
+
+axum = { workspace = true, features = ["macros"] }
+axum-extra = { workspace = true, features = ["typed-header"] }
+axum-macros = { workspace = true }
+bytes = { workspace = true }
+console_error_panic_hook = { workspace = true }
+cookie = { workspace = true }
+dotenvy = { workspace = true }
+futures-util = { workspace = true }
+http = { workspace = true }
+hyper = { workspace = true }
+hyper-tls = { workspace = true }
+itertools = { workspace = true }
+lambda-web = { workspace = true, features = ["hyper"], optional = true }
+oauth2 = { workspace = true }
+pasetors = { workspace = true, features = ["paserk"] }
+redact = { workspace = true }
+reqwest = { workspace = true, features = ["json", "blocking", "stream"] }
+serde = { workspace = true, features = ["derive", "rc", "alloc"] }
+serde_json = { workspace = true }
+tower = { workspace = true }
+#tower_governor = "0.4"
+tower-http = { workspace = true, features = ["full"] }
+tokio = { workspace = true, features = ["full"] }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true, features = ["env-filter", "json"] }
+url = { workspace = true }

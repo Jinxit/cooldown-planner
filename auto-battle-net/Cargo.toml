@@ -4,40 +4,220 @@ version = "0.1.0"
 edition = "2021"
 build = "build/main.rs"
 
-[features]
-default = []
-reqwest = ["dep:reqwest", "dep:cached"]
-
 [dependencies]
-async-trait = "0.1"
-base64 = "0.22"
-cached = { version = "0.51", optional = true }
-governor = "0.6"
-http = "1"
-lazy_static = "1.4"
-ordered-float = { version = "4.2", features = ["serde"] }
-reqwest = { version = "0.11", features = ["blocking", "json"], optional = true }
-serde = { version = "1.0", features = ["derive", "rc"] }
-serde-lite = { version = "0.4" }
-serde-lite-derive = { version = "0.4" }
-serde_json = "1.0"
-serde_with = "3.0"
-strum = "0.25"
-strum_macros = "0.25"
-thiserror = "1.0"
-tracing = "0.1.37"
-url = "2.3"
-urlencoding = "2.1"
+i18n = { path = "../i18n" }
+
+async-trait = { workspace = true }
+base64 = { workspace = true }
+governor = { workspace = true }
+http = { workspace = true }
+lazy_static = { workspace = true }
+ordered-float = { workspace = true, features = ["serde"] }
+reqwest = { workspace = true, features = ["blocking", "json"], optional = true }
+serde = { workspace = true, features = ["derive", "rc"] }
+serde-lite = { workspace = true }
+serde-lite-derive = { workspace = true }
+serde_json = { workspace = true }
+serde_with = { workspace = true }
+strum = { workspace = true }
+strum_macros = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+url = { workspace = true }
+urlencoding = { workspace = true }
 
 [build-dependencies]
-base64 = "0.22"
-convert_case = "0.6"
-dotenvy = "0.15"
-governor = "0.6"
-html2md = "0.2.14"
-itertools = "0.11"
-lazy_static = "1.4"
-reqwest = { version = "0.11", features = ["blocking", "json"] }
-serde = { version = "1.0", features = ["derive", "rc"] }
-serde_json = "1.0"
-tokio = { version = "1.32", features = ["rt", "rt-multi-thread", "macros"] }
+base64 = { workspace = true }
+convert_case = { workspace = true }
+dotenvy = { workspace = true }
+governor = { workspace = true }
+itertools = { workspace = true }
+lazy_static = { workspace = true }
+reqwest = { workspace = true, features = ["blocking", "json"] }
+serde = { workspace = true, features = ["derive", "rc"] }
+serde_json = { workspace = true }
+tokio = { workspace = true, features = ["rt", "rt-multi-thread", "macros"] }
+
+[features]
+default = []
+reqwest = ["dep:reqwest"]
+
+game_data-achievement-achievement = []
+game_data-achievement-achievement_categories_index = []
+game_data-achievement-achievement_category = []
+game_data-achievement-achievement_media = []
+game_data-achievement-achievements_index = []
+game_data-auction_house-auctions = []
+game_data-auction_house-commodities = []
+game_data-azerite_essence-azerite_essence = []
+game_data-azerite_essence-azerite_essence_media = []
+game_data-azerite_essence-azerite_essence_search = []
+game_data-azerite_essence-azerite_essences_index = []
+game_data-connected_realm-connected_realm = []
+game_data-connected_realm-connected_realms_index = []
+game_data-connected_realm-connected_realms_search = []
+game_data-covenant-conduit = []
+game_data-covenant-conduit_index = []
+game_data-covenant-covenant = []
+game_data-covenant-covenant_index = []
+game_data-covenant-covenant_media = []
+game_data-covenant-soulbind = []
+game_data-covenant-soulbind_index = []
+game_data-creature-creature = []
+game_data-creature-creature_display_media = []
+game_data-creature-creature_families_index = []
+game_data-creature-creature_family = []
+game_data-creature-creature_family_media = []
+game_data-creature-creature_search = []
+game_data-creature-creature_type = []
+game_data-creature-creature_types_index = []
+game_data-guild_crest-guild_crest_border_media = []
+game_data-guild_crest-guild_crest_components_index = []
+game_data-guild_crest-guild_crest_emblem_media = []
+game_data-heirloom-heirloom = []
+game_data-heirloom-heirloom_index = []
+game_data-item-item = []
+game_data-item-item_class = []
+game_data-item-item_classes_index = []
+game_data-item-item_media = []
+game_data-item-item_search = []
+game_data-item-item_set = []
+game_data-item-item_sets_index = []
+game_data-item-item_subclass = []
+game_data-journal-journal_encounter = []
+game_data-journal-journal_encounter_search = []
+game_data-journal-journal_encounters_index = []
+game_data-journal-journal_expansion = []
+game_data-journal-journal_expansions_index = []
+game_data-journal-journal_instance = []
+game_data-journal-journal_instance_media = []
+game_data-journal-journal_instances_index = []
+game_data-media_search-media_search = []
+game_data-modified_crafting-modified_crafting_category = []
+game_data-modified_crafting-modified_crafting_category_index = []
+game_data-modified_crafting-modified_crafting_index = []
+game_data-modified_crafting-modified_crafting_reagent_slot_type = []
+game_data-modified_crafting-modified_crafting_reagent_slot_type_index = []
+game_data-mount-mount = []
+game_data-mount-mount_search = []
+game_data-mount-mounts_index = []
+game_data-mythic_keystone_affix-mythic_keystone_affix = []
+game_data-mythic_keystone_affix-mythic_keystone_affix_media = []
+game_data-mythic_keystone_affix-mythic_keystone_affixes_index = []
+game_data-mythic_keystone_dungeon-mythic_keystone_dungeon = []
+game_data-mythic_keystone_dungeon-mythic_keystone_dungeons_index = []
+game_data-mythic_keystone_dungeon-mythic_keystone_index = []
+game_data-mythic_keystone_dungeon-mythic_keystone_period = []
+game_data-mythic_keystone_dungeon-mythic_keystone_periods_index = []
+game_data-mythic_keystone_dungeon-mythic_keystone_season = []
+game_data-mythic_keystone_dungeon-mythic_keystone_seasons_index = []
+game_data-mythic_keystone_leaderboard-mythic_keystone_leaderboard = []
+game_data-mythic_keystone_leaderboard-mythic_keystone_leaderboards_index = []
+game_data-mythic_raid_leaderboard-mythic_raid_leaderboard = []
+game_data-pet-pet = []
+game_data-pet-pet_abilities_index = []
+game_data-pet-pet_ability = []
+game_data-pet-pet_ability_media = []
+game_data-pet-pet_media = []
+game_data-pet-pets_index = []
+game_data-playable_class-playable_class = []
+game_data-playable_class-playable_class_media = []
+game_data-playable_class-playable_classes_index = []
+game_data-playable_class-pvp_talent_slots = []
+game_data-playable_race-playable_race = []
+game_data-playable_race-playable_races_index = []
+game_data-playable_specialization-playable_specialization = []
+game_data-playable_specialization-playable_specialization_media = []
+game_data-playable_specialization-playable_specializations_index = []
+game_data-power_type-power_type = []
+game_data-power_type-power_types_index = []
+game_data-profession-profession = []
+game_data-profession-profession_media = []
+game_data-profession-profession_skill_tier = []
+game_data-profession-professions_index = []
+game_data-profession-recipe = []
+game_data-profession-recipe_media = []
+game_data-pvp_season-pvp_leaderboard = []
+game_data-pvp_season-pvp_leaderboards_index = []
+game_data-pvp_season-pvp_rewards_index = []
+game_data-pvp_season-pvp_season = []
+game_data-pvp_season-pvp_seasons_index = []
+game_data-pvp_tier-pvp_tier = []
+game_data-pvp_tier-pvp_tier_media = []
+game_data-pvp_tier-pvp_tiers_index = []
+game_data-quest-quest = []
+game_data-quest-quest_area = []
+game_data-quest-quest_areas_index = []
+game_data-quest-quest_categories_index = []
+game_data-quest-quest_category = []
+game_data-quest-quest_type = []
+game_data-quest-quest_types_index = []
+game_data-quest-quests_index = []
+game_data-realm-realm = []
+game_data-realm-realm_search = []
+game_data-realm-realms_index = []
+game_data-region-region = []
+game_data-region-regions_index = []
+game_data-reputations-reputation_faction = []
+game_data-reputations-reputation_factions_index = []
+game_data-reputations-reputation_tiers = []
+game_data-reputations-reputation_tiers_index = []
+game_data-spell-spell = []
+game_data-spell-spell_media = []
+game_data-spell-spell_search = []
+game_data-talent-pvp_talent = []
+game_data-talent-pvp_talents_index = []
+game_data-talent-talent = []
+game_data-talent-talent_tree = []
+game_data-talent-talent_tree_index = []
+game_data-talent-talent_tree_nodes = []
+game_data-talent-talents_index = []
+game_data-tech_talent-tech_talent = []
+game_data-tech_talent-tech_talent_index = []
+game_data-tech_talent-tech_talent_media = []
+game_data-tech_talent-tech_talent_tree = []
+game_data-tech_talent-tech_talent_tree_index = []
+game_data-title-title = []
+game_data-title-titles_index = []
+game_data-toy-toy = []
+game_data-toy-toy_index = []
+game_data-wow_token-wow_token_index_useukrtw = []
+profile-account_profile-account_collections_index = []
+profile-account_profile-account_heirlooms_collection_summary = []
+profile-account_profile-account_mounts_collection_summary = []
+profile-account_profile-account_pets_collection_summary = []
+profile-account_profile-account_profile_summary = []
+profile-account_profile-account_toys_collection_summary = []
+profile-account_profile-protected_character_profile_summary = []
+profile-character_achievements-character_achievement_statistics = []
+profile-character_achievements-character_achievements_summary = []
+profile-character_appearance-character_appearance_summary = []
+profile-character_collections-character_collections_index = []
+profile-character_collections-character_heirlooms_collection_summary = []
+profile-character_collections-character_mounts_collection_summary = []
+profile-character_collections-character_pets_collection_summary = []
+profile-character_collections-character_toys_collection_summary = []
+profile-character_encounters-character_dungeons = []
+profile-character_encounters-character_encounters_summary = []
+profile-character_encounters-character_raids = []
+profile-character_equipment-character_equipment_summary = []
+profile-character_hunter_pets-character_hunter_pets_summary = []
+profile-character_media-character_media_summary = []
+profile-character_mythic_keystone_profile-character_mythic_keystone_profile_index = []
+profile-character_mythic_keystone_profile-character_mythic_keystone_season_details = []
+profile-character_professions-character_professions_summary = []
+profile-character_profile-character_profile_status = []
+profile-character_profile-character_profile_summary = []
+profile-character_pvp-character_pvp_bracket_statistics = []
+profile-character_pvp-character_pvp_summary = []
+profile-character_quests-character_completed_quests = []
+profile-character_quests-character_quests = []
+profile-character_reputations-character_reputations_summary = []
+profile-character_soulbinds-character_soulbinds = []
+profile-character_specializations-character_specializations_summary = []
+profile-character_statistics-character_statistics_summary = []
+profile-character_titles-character_titles_summary = []
+profile-guild-guild = []
+profile-guild-guild_achievements = []
+profile-guild-guild_activity = []
+profile-guild-guild_roster = []

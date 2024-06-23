@@ -1,22 +1,25 @@
 #![allow(clippy::ptr_arg)]
 #![allow(clippy::get_first)]
 
+use std::{env, fs};
+use std::fs::File;
+use std::io::Write;
+use std::path::{Path, PathBuf};
+
+use convert_case::{Case, Casing};
+use itertools::Itertools;
+use reqwest::Url;
+
+use fetch::fetch;
+use infer::infer_from_json;
+
+use crate::request::method_request;
+use crate::resource_json::{Method, Resources};
+
 mod fetch;
 mod infer;
 mod request;
 mod resource_json;
-
-use crate::request::method_request;
-use crate::resource_json::{Method, Resources};
-use convert_case::{Case, Casing};
-use fetch::fetch;
-use infer::infer_from_json;
-use itertools::Itertools;
-use reqwest::Url;
-use std::fs::File;
-use std::io::Write;
-use std::path::{Path, PathBuf};
-use std::{env, fs};
 
 #[tokio::main]
 async fn main() {
@@ -75,8 +78,8 @@ async fn main() {
                 .with_extension("rs");
             fs::create_dir_all(dest_path.parent().unwrap()).unwrap();
 
-            let should_cache = !method.path.starts_with("/profile/user");
-            let output = generate_api(&root_name, method, should_cache, "{}.api.blizzard.com");
+            let is_user_dependent = method.path.starts_with("/profile/user");
+            let output = generate_api(&root_name, method, is_user_dependent, "{}.api.blizzard.com");
             eprintln!("write 0 {dest_path:?}");
             File::options()
                 .create(true)
@@ -139,7 +142,7 @@ async fn main() {
                 .with_extension("rs");
             fs::create_dir_all(dest_path.parent().unwrap()).unwrap();
 
-            let output = generate_api(&root_name, method, true, "{}.api.blizzard.com");
+            let output = generate_api(&root_name, method, false, "{}.api.blizzard.com");
             eprintln!("write 0 {dest_path:?}");
             File::options()
                 .create(true)
@@ -170,7 +173,7 @@ async fn main() {
         .iter()
         .filter(|s| s.path.len() >= 2)
         .sorted_by_key(|s| s.path.get(0).unwrap())
-        .group_by(|s| s.path.get(0).unwrap())
+        .chunk_by(|s| s.path.get(0).unwrap())
     {
         eprintln!("writing 2 {parent}");
         let dest_path = Path::new(&out_dir).join(parent).join("mod.rs");
@@ -196,7 +199,7 @@ async fn main() {
     for (path, structs) in &structs
         .iter()
         .filter(|s| !s.path.is_empty())
-        .group_by(|s| s.path.clone())
+        .chunk_by(|s| s.path.clone())
     {
         let dest_path = Path::new(&out_dir)
             .join(path.iter().collect::<PathBuf>())
@@ -219,7 +222,7 @@ async fn main() {
             .unwrap();
     }
 
-    for (path, structs) in &structs.iter().filter(|s| !s.path.is_empty()).group_by(|s| {
+    for (path, structs) in &structs.iter().filter(|s| !s.path.is_empty()).chunk_by(|s| {
         let mut path = s.path.clone();
         path.remove(path.len() - 1);
         path
@@ -238,9 +241,14 @@ async fn main() {
             .write_all(
                 structs
                     .into_iter()
-                    .map(|s| s.path.last().unwrap())
-                    .unique()
-                    .map(|mod_name| format!("pub mod {mod_name};"))
+                    .unique_by(|s| s.path.last().unwrap())
+                    .map(|s| {
+                        format!(
+                            "#[cfg(feature = \"{path}-{mod_name}\")]\npub mod {mod_name};",
+                            path = path.join("-"),
+                            mod_name = s.path.last().unwrap()
+                        )
+                    })
                     .join("\n")
                     .as_bytes(),
             )
@@ -248,7 +256,7 @@ async fn main() {
     }
 }
 
-fn generate_api(root_name: &str, method: Method, should_cache: bool, authority: &str) -> String {
+fn generate_api(root_name: &str, method: Method, is_user_dependent: bool, authority: &str) -> String {
     let namespace_category = match method
         .parameters
         .iter()
@@ -302,8 +310,8 @@ impl crate::BattleNetRequest for {root_name}Request {{
             .unwrap()
     }}
 
-    fn should_cache() -> bool {{
-        {should_cache}
+    fn is_user_dependent() -> bool {{
+        {is_user_dependent}
     }}
 }}
 

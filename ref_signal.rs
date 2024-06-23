@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use leptos::prelude::*;
+use leptos::*;
 
 #[derive(Clone)]
 pub struct RefSignal<T> {

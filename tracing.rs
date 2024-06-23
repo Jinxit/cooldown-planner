@@ -1,4 +1,4 @@
-use leptos::prelude::*;
+use leptos::*;
 use tracing_subscriber::{fmt, util::SubscriberInitExt};
 use tracing_subscriber_wasm::MakeConsoleWriter;
 

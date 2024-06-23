@@ -1,46 +1,42 @@
 use std::fmt::{Display, Formatter};
 
 use leptos::prelude::*;
+use leptos::tachys::view::any_view::AnyView;
 
-use auto_battle_net::LocalizedString;
-
-use crate::context::PlannerContext;
+use i18n::{Locale, LocalizedString};
+use crate::context::UserContext;
 
 pub trait LocalizedStringWithContext {
-    fn localize(&self) -> LocalizedStringView;
+    type Target;
+    fn localize(&self, user_context: UserContext) -> Self::Target;
 }
 
 impl LocalizedStringWithContext for LocalizedString {
-    fn localize(&self) -> LocalizedStringView {
-        LocalizedStringView(self.clone())
-    }
-}
+    type Target = impl IntoView;
 
-#[derive(Clone)]
-pub struct LocalizedStringView(LocalizedString);
-
-/*
-impl IntoView for LocalizedStringView {
-    fn into_view(self) -> View {
-        view! {
-            <Suspense>
-                {self.to_string()}
-            </Suspense>
+    fn localize(&self, user_context: UserContext) -> Self::Target {
+        let s = self.clone();
+        move || {
+            let s = s.clone();
+            view! {
+                <Suspense>
+                    {
+                        let s = s.clone();
+                        Suspend(async move {
+                            let locale = user_context.locale.await;
+                            s.get(locale).to_owned()
+                        })
+                    }
+                </Suspense>
+            }
         }
     }
 }
- */
 
-impl Display for LocalizedStringView {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.as_ref())
-    }
-}
+impl LocalizedStringWithContext for Option<LocalizedString> {
+    type Target = Option<<LocalizedString as LocalizedStringWithContext>::Target>;
 
-impl AsRef<str> for LocalizedStringView {
-    fn as_ref(&self) -> &str {
-        let planner_context = use_context::<PlannerContext>().unwrap();
-        let locale = planner_context.locale().get();
-        self.0.get(locale)
+    fn localize(&self, user_context: UserContext) -> Self::Target {
+        self.as_ref().map(|s| s.localize(user_context))
     }
 }

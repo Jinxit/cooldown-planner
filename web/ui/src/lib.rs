@@ -1,12 +1,14 @@
-pub use planner_character::*;
-pub use planner_fight::*;
-pub use planner_state::*;
+pub fn add(left: u64, right: u64) -> u64 {
+    left + right
+}
 
-pub mod fights;
-pub mod fuzzy_search;
-pub mod localization;
-mod planner;
-mod planner_character;
-mod planner_fight;
-mod planner_state;
-pub mod specs;
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn it_works() {
+        let result = add(2, 2);
+        assert_eq!(result, 4);
+    }
+}

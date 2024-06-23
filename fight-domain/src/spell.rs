@@ -1,17 +1,19 @@
-use crate::serde_not_nan::{deserialize_not_nan, serialize_not_nan};
-use crate::{Identifier, LookupKey, TimeStep};
-use ordered_float::NotNan;
-use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 use std::fmt::{Display, Formatter};
+
+use ordered_float::NotNan;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+
+use crate::{Identifier, LookupKey, TimeStep};
+use crate::serde_not_nan::{deserialize_not_nan, serialize_not_nan};
 
 #[derive(Serialize, Deserialize, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct SpellUuid(Uuid);
 
 impl SpellUuid {
-    pub fn new(uuid: &'static str) -> SpellUuid {
-        Self(Uuid::parse_str(uuid).unwrap())
+    pub const fn new(uuid: Uuid) -> SpellUuid {
+        Self(uuid)
     }
 }
 
@@ -24,6 +26,7 @@ impl Display for SpellUuid {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Spell {
     pub uuid: SpellUuid,
+    // TODO: name should be a LocalizedString
     pub name: String,
     pub icon_text: Option<String>,
     #[serde(
@@ -46,8 +49,8 @@ pub struct Spell {
 impl LookupKey for Spell {
     type Key = SpellUuid;
 
-    fn lookup_key(&self) -> &Self::Key {
-        &self.uuid
+    fn lookup_key(&self) -> Self::Key {
+        self.uuid
     }
 }
 

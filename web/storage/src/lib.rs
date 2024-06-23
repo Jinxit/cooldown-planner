@@ -1,64 +1,40 @@
-mod keyable;
-mod store;
+use std::fmt::Debug;
+use std::future::Future;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
+
+use serde::de::DeserializeOwned;
+use serde::Serialize;
 
 pub use keyable::Keyable;
+
+use crate::store::{Store, StoreKey};
+
+mod keyable;
+mod store;
 
 #[cfg(feature = "axum")]
 pub mod axum;
 #[cfg(feature = "sqlite")]
 pub mod sqlite;
 
-use crate::store::{Store, StoreKey};
-use serde::de::DeserializeOwned;
-use serde::Serialize;
-use std::any::{type_name, TypeId};
-use std::fmt::{Debug, Formatter};
-use std::future::Future;
-use std::marker::PhantomData;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
-
-pub struct Storage<K, V> {
-    store: Store<V>,
-    _phantom: PhantomData<K>,
+#[derive(Clone, Debug)]
+pub struct Storage {
+    store: Store,
 }
 
-impl<K, V> Clone for Storage<K, V> {
-    fn clone(&self) -> Self {
-        Self {
-            store: self.store.clone(),
-            _phantom: PhantomData,
-        }
-    }
-}
-
-impl<K, V> Debug for Storage<K, V> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Storage<{}, {}>", type_name::<K>(), type_name::<V>())
-    }
-}
-
-impl<K, V> Storage<K, V>
-where
-    K: Keyable + 'static,
-    V: Serialize + DeserializeOwned + Send + Sync + 'static,
-{
-    pub fn new(store: Store<V>) -> Self {
-        Self {
-            store,
-            _phantom: PhantomData,
-        }
+impl Storage {
+    pub fn new(store: Store) -> Self {
+        Self { store }
     }
 
-    pub async fn fetch<Fetcher, Fut>(&self, key: &K, ttl: Duration, fetcher: Fetcher) -> V
+    pub async fn fetch<K, V, Fetcher, Fut>(&self, key: &K, ttl: Duration, fetcher: Fetcher) -> V
     where
+        K: Keyable + 'static,
+        V: Serialize + DeserializeOwned + Send + Sync + 'static,
         Fetcher: FnOnce() -> Fut,
         Fut: Future<Output = V>,
     {
-        let store_key = StoreKey {
-            key: key.to_key(),
-            key_type: TypeId::of::<K>(),
-            value_type: TypeId::of::<V>(),
-        };
+        let store_key = StoreKey::new::<K, V>(key);
         match self.store.get(&store_key).await {
             Some(value) => serde_json::from_value(value).unwrap(),
             None => {
@@ -75,21 +51,19 @@ where
         }
     }
 
-    pub async fn try_fetch<E, Fetcher, Fut>(
+    pub async fn try_fetch<K, V, E, Fetcher, Fut>(
         &self,
         key: &K,
         ttl: Duration,
         fetcher: Fetcher,
     ) -> Result<V, E>
     where
+        K: Keyable + 'static,
+        V: Serialize + DeserializeOwned + Send + Sync + 'static,
         Fetcher: FnOnce() -> Fut,
         Fut: Future<Output = Result<V, E>>,
     {
-        let store_key = StoreKey {
-            key: key.to_key(),
-            key_type: TypeId::of::<K>(),
-            value_type: TypeId::of::<V>(),
-        };
+        let store_key = StoreKey::new::<K, V>(key);
         match self.store.get(&store_key).await {
             Some(value) => Ok(serde_json::from_value(value).unwrap()),
             None => {
@@ -104,35 +78,35 @@ where
         }
     }
 
-    pub async fn put(&self, key: &K, ttl: Duration, value: &V) {
-        let store_key = StoreKey {
-            key: key.to_key(),
-            key_type: TypeId::of::<K>(),
-            value_type: TypeId::of::<V>(),
-        };
+    pub async fn put<K, V>(&self, key: &K, ttl: Duration, value: &V)
+    where
+        K: Keyable + 'static,
+        V: Serialize + DeserializeOwned + Send + Sync + 'static,
+    {
+        let store_key = StoreKey::new::<K, V>(key);
         self.store
             .put(&store_key, serde_json::to_value(value).unwrap(), Some(&ttl))
             .await;
     }
 
-    pub async fn get(&self, key: &str) -> Option<V> {
-        let store_key = StoreKey {
-            key: key.to_string(),
-            key_type: TypeId::of::<K>(),
-            value_type: TypeId::of::<V>(),
-        };
+    pub async fn get<K, V>(&self, key: &K) -> Option<V>
+    where
+        K: Keyable + 'static,
+        V: Serialize + DeserializeOwned + Send + Sync + 'static,
+    {
+        let store_key = StoreKey::new::<K, V>(key);
         self.store
             .get(&store_key)
             .await
             .and_then(|v| serde_json::from_value(v).ok())
     }
 
-    pub async fn clear(&self, key: &str) {
-        let store_key = StoreKey {
-            key: key.to_string(),
-            key_type: TypeId::of::<K>(),
-            value_type: TypeId::of::<V>(),
-        };
+    pub async fn clear<K, V>(&self, key: &K)
+    where
+        K: Keyable + 'static,
+        V: Serialize + DeserializeOwned + Send + Sync + 'static,
+    {
+        let store_key = StoreKey::new::<K, V>(key);
         self.store.clear(&store_key).await
     }
 }

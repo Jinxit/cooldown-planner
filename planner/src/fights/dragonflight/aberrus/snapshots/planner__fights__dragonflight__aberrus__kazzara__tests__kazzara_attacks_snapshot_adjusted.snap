@@ -1,0 +1,201 @@
+---
+source: planner/src/fights/dragonflight/aberrus/kazzara.rs
+assertion_line: 281
+expression: attacks
+---
+{
+  "container": {
+    "755af363-d688-4147-9e30-7bf0f9bf00f9": {
+      "uuid": "755af363-d688-4147-9e30-7bf0f9bf00f9",
+      "name": "On Pull",
+      "power": 0.0,
+      "type": "Generic",
+      "timer": {
+        "phase_start": null,
+        "phase_end": null,
+        "dynamic_timer": 3,
+        "dynamic_trigger_cleu_event": null
+      }
+    },
+    "ec9bdd6b-ec2f-499a-9415-0ae043f20465": {
+      "uuid": "ec9bdd6b-ec2f-499a-9415-0ae043f20465",
+      "name": "Knock AoE",
+      "power": 1.0,
+      "type": "RaidDamage",
+      "timer": {
+        "phase_start": null,
+        "phase_end": null,
+        "dynamic_timer": 17,
+        "dynamic_trigger_cleu_event": null
+      }
+    },
+    "53d6e795-e1d1-4f79-a250-e2bfe07abbbd": {
+      "uuid": "53d6e795-e1d1-4f79-a250-e2bfe07abbbd",
+      "name": "80% HP AoE",
+      "power": 1.0,
+      "type": "RaidDamage",
+      "timer": {
+        "phase_start": 20,
+        "phase_end": null,
+        "dynamic_timer": 3,
+        "dynamic_trigger_cleu_event": {
+          "type": "SpellCastStart",
+          "event": 401316,
+          "counter": 1
+        }
+      }
+    },
+    "a8f9b2e4-22f5-499f-b157-683514383e04": {
+      "uuid": "a8f9b2e4-22f5-499f-b157-683514383e04",
+      "name": "Knock AoE",
+      "power": 1.0,
+      "type": "RaidDamage",
+      "timer": {
+        "phase_start": null,
+        "phase_end": null,
+        "dynamic_timer": 51,
+        "dynamic_trigger_cleu_event": null
+      }
+    },
+    "8623ff4f-7669-4922-8ec9-55d1d4849260": {
+      "uuid": "8623ff4f-7669-4922-8ec9-55d1d4849260",
+      "name": "Knock AoE",
+      "power": 1.0,
+      "type": "RaidDamage",
+      "timer": {
+        "phase_start": null,
+        "phase_end": null,
+        "dynamic_timer": 94,
+        "dynamic_trigger_cleu_event": null
+      }
+    },
+    "fdc9c894-985f-4758-81d9-abf2280d5398": {
+      "uuid": "fdc9c894-985f-4758-81d9-abf2280d5398",
+      "name": "60% HP AoE",
+      "power": 1.0,
+      "type": "RaidDamage",
+      "timer": {
+        "phase_start": 104,
+        "phase_end": null,
+        "dynamic_timer": 3,
+        "dynamic_trigger_cleu_event": {
+          "type": "SpellCastStart",
+          "event": 401318,
+          "counter": 1
+        }
+      }
+    },
+    "f15d1724-2a77-4238-9f73-97849121afd6": {
+      "uuid": "f15d1724-2a77-4238-9f73-97849121afd6",
+      "name": "40% HP AoE",
+      "power": 1.0,
+      "type": "RaidDamage",
+      "timer": {
+        "phase_start": 120,
+        "phase_end": null,
+        "dynamic_timer": 3,
+        "dynamic_trigger_cleu_event": {
+          "type": "SpellCastStart",
+          "event": 401319,
+          "counter": 1
+        }
+      }
+    },
+    "0c09b21c-355f-424f-abb0-17022cbd0b3f": {
+      "uuid": "0c09b21c-355f-424f-abb0-17022cbd0b3f",
+      "name": "Knock AoE",
+      "power": 1.0,
+      "type": "RaidDamage",
+      "timer": {
+        "phase_start": null,
+        "phase_end": null,
+        "dynamic_timer": 138,
+        "dynamic_trigger_cleu_event": null
+      }
+    },
+    "99010925-0e6d-4c5f-9d84-4389b3b2eef5": {
+      "uuid": "99010925-0e6d-4c5f-9d84-4389b3b2eef5",
+      "name": "Knock AoE",
+      "power": 1.0,
+      "type": "RaidDamage",
+      "timer": {
+        "phase_start": null,
+        "phase_end": null,
+        "dynamic_timer": 172,
+        "dynamic_trigger_cleu_event": null
+      }
+    },
+    "3692b1b9-3869-45e6-90c8-82846f55d987": {
+      "uuid": "3692b1b9-3869-45e6-90c8-82846f55d987",
+      "name": "Knock AoE",
+      "power": 1.0,
+      "type": "RaidDamage",
+      "timer": {
+        "phase_start": null,
+        "phase_end": null,
+        "dynamic_timer": 216,
+        "dynamic_trigger_cleu_event": null
+      }
+    },
+    "73abc776-e9d5-489c-a638-066a1498725b": {
+      "uuid": "73abc776-e9d5-489c-a638-066a1498725b",
+      "name": "Knock AoE",
+      "power": 1.0,
+      "type": "RaidDamage",
+      "timer": {
+        "phase_start": null,
+        "phase_end": null,
+        "dynamic_timer": 250,
+        "dynamic_trigger_cleu_event": null
+      }
+    },
+    "6fc7f880-9614-498f-839f-3c197adcf192": {
+      "uuid": "6fc7f880-9614-498f-839f-3c197adcf192",
+      "name": "Knock AoE",
+      "power": 1.0,
+      "type": "RaidDamage",
+      "timer": {
+        "phase_start": null,
+        "phase_end": null,
+        "dynamic_timer": 284,
+        "dynamic_trigger_cleu_event": null
+      }
+    },
+    "ca447563-ef8d-4ef8-b091-cb6f5f980243": {
+      "uuid": "ca447563-ef8d-4ef8-b091-cb6f5f980243",
+      "name": "Knock AoE",
+      "power": 1.0,
+      "type": "RaidDamage",
+      "timer": {
+        "phase_start": null,
+        "phase_end": null,
+        "dynamic_timer": 291,
+        "dynamic_trigger_cleu_event": null
+      }
+    },
+    "7e9c58e8-7b95-4022-9feb-5fc9c0ad97f3": {
+      "uuid": "7e9c58e8-7b95-4022-9feb-5fc9c0ad97f3",
+      "name": "Knock AoE",
+      "power": 1.0,
+      "type": "RaidDamage",
+      "timer": {
+        "phase_start": null,
+        "phase_end": null,
+        "dynamic_timer": 327,
+        "dynamic_trigger_cleu_event": null
+      }
+    },
+    "b247bd61-ff11-4960-a701-dfe3e5bf52e8": {
+      "uuid": "b247bd61-ff11-4960-a701-dfe3e5bf52e8",
+      "name": "Knock AoE",
+      "power": 1.0,
+      "type": "RaidDamage",
+      "timer": {
+        "phase_start": null,
+        "phase_end": null,
+        "dynamic_timer": 364,
+        "dynamic_trigger_cleu_event": null
+      }
+    }
+  }
+}

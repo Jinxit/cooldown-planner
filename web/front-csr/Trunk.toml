@@ -1,0 +1,30 @@
+[build]
+filehash = false
+
+[watch]
+watch = [
+    "./",
+    "../app/src",
+    "../assets",
+    "../css",
+    "../../auto-battle-net/src",
+    "../../fight-domain/src",
+    "../../i18n/src",
+    "../../optimizer/src",
+    "../../planner/src",
+]
+
+[serve]
+port = 3000
+
+[[proxy]]
+rewrite = "/bnet/"
+backend = "http://localhost:8080/bnet/"
+
+[[proxy]]
+rewrite = "/spell_icon/"
+backend = "http://localhost:8080/spell_icon/"
+
+[[proxy]]
+rewrite = "/icon/"
+backend = "http://localhost:8080/icon/"

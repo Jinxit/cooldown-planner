@@ -2,32 +2,30 @@
 #![allow(async_fn_in_trait)]
 #![allow(clippy::module_inception)]
 
-include!(concat!(env!("OUT_DIR"), "/mod.rs"));
-
-mod api;
-pub use api::*;
 use ordered_float::NotNan;
 use serde_lite::{Deserialize, Serialize};
 
-mod clients;
+pub use access_token::*;
+pub use api::*;
 pub use clients::*;
-mod error;
 pub use error::*;
-mod namespace;
-pub use namespace::*;
-mod locale;
-pub use locale::*;
-mod region;
-pub use region::*;
-mod localized_string;
-pub use localized_string::*;
-mod link;
+pub(crate) use i18n::*;
 pub use link::*;
+pub use namespace::*;
+#[cfg(feature = "reqwest")]
+pub use reqwest_client::*;
+
+include!(concat!(env!("OUT_DIR"), "/mod.rs"));
+
+mod access_token;
+mod api;
+mod clients;
+mod error;
+mod link;
+mod namespace;
 pub mod oauth;
 #[cfg(feature = "reqwest")]
 mod reqwest_client;
-#[cfg(feature = "reqwest")]
-pub use reqwest_client::*;
 
 #[allow(dead_code)]
 fn serialize_not_nan(value: &NotNan<f64>) -> Result<serde_lite::Intermediate, serde_lite::Error> {

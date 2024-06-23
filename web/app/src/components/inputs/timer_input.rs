@@ -1,8 +1,8 @@
-use crate::components::ValidatedInput;
 use fight_domain::FromMinutesSeconds;
 use leptos::prelude::*;
 use std::str::FromStr;
 use std::time::Duration;
+use crate::components::inputs::validated_input::ValidatedInput;
 
 #[component]
 pub fn TimerInput(

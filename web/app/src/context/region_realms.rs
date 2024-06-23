@@ -4,10 +4,9 @@ use leptos::prelude::*;
 use auto_battle_net::game_data::realm::realms_index::Realms;
 
 use crate::misc::flatten_ok::FlattenOk;
-use crate::reactive::async_ext::ReadyOrReloading;
 use crate::serverfns::region_realms;
 
-use super::PlannerContext;
+use super::UserContext;
 
 #[derive(Copy, Clone, Debug)]
 pub struct RegionRealms(Signal<Vec<Realms>>);
@@ -22,7 +21,7 @@ impl IntoIterator for RegionRealms {
 }
 
 pub fn provide_region_realms_context() {
-    let region = use_context::<PlannerContext>().unwrap().region();
+    let region = use_context::<UserContext>().unwrap().region.clone();
     let realms = Resource::new_serde(
         region,
         move |region| async move { region_realms(region).await },

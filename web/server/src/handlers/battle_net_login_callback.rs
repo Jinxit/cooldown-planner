@@ -1,19 +1,22 @@
-use app_package::session::{BattleNetUser, CooldownPlannerSession};
-use auto_battle_net::oauth::user_authentication::user_info::UserInfoRequest;
-use auto_battle_net::{BattleNetClientAsync, Region, ReqwestBattleNetClient};
+use axum::Extension;
 use axum::extract::Query;
 use axum::response::{Html, IntoResponse, Response};
-use axum::Extension;
 use http::StatusCode;
-use oauth2::basic::BasicClient;
-use oauth2::reqwest::async_http_client;
 use oauth2::{
-    AuthUrl, AuthorizationCode, ClientId, ClientSecret, PkceCodeChallenge, RedirectUrl,
+    AuthorizationCode, AuthUrl, ClientId, ClientSecret, PkceCodeChallenge, RedirectUrl,
     TokenResponse, TokenUrl,
 };
-use paseto_sessions::Session;
+use oauth2::basic::BasicClient;
+use oauth2::reqwest::async_http_client;
 use redact::Secret;
 use serde::Deserialize;
+use tracing::warn;
+
+use app_package::session::{BattleNetUser, CooldownPlannerSession};
+use auto_battle_net::{BattleNetAccessToken, BattleNetClientAsync, ReqwestBattleNetClient};
+use auto_battle_net::oauth::user_authentication::user_info::UserInfoRequest;
+use i18n::Region;
+use paseto_sessions::Session;
 
 #[derive(Debug, Deserialize)]
 pub struct AuthorizationQuery {
@@ -62,7 +65,7 @@ pub async fn battle_net_login_callback(
             .unwrap();
 
         // Unwrapping token_result will either produce a Token or a RequestTokenError.
-        let access_token = token_result.access_token().secret();
+        let access_token = BattleNetAccessToken::AuthorizationCode(token_result.access_token().secret().to_string());
 
         let user_info = ReqwestBattleNetClient {
             region: Region::Europe,

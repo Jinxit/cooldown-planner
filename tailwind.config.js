@@ -7,13 +7,14 @@ const cartesian = (...a) => a.reduce((a, b) => a.flatMap(d => b.map(e => [d, e].
 
 module.exports = {
     content: {
-        files: ['*.html', './web/app/**/*.rs'],
+        files: ['*.html', './web/app/**/*.rs', './web/front-csr/**/*.rs', '../app/**/*.rs', 'src/**/*.rs'],
     },
     safelist: cartesian(
         [
             'border-cc',
             'border-r-cc',
-            'focus-visible:border-cc'
+            'focus-visible:border-cc',
+            'bg-cc',
         ],
         [
             'death-knight',

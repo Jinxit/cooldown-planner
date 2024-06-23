@@ -139,26 +139,21 @@ pub fn optimize(
     let initial_plan = Plan::new(characters, attacks, initial_assignments);
     let model = FightModel { score_function };
 
-    let iterations = 1000;
-    let time_limit = Duration::from_secs(10);
+    let iterations = 100000;
+    let time_limit = Duration::from_secs(3);
 
-    let (plan, score) = (0..10)
-        .map(|_| {
-            optimizer.optimize(
-                &model,
-                Some(initial_plan.clone()),
-                iterations,
-                time_limit,
-                Some(&|status: OptProgress<Plan, NotNan<f64>>| {
-                    callback(
-                        status.solution.borrow().assignments.clone(),
-                        -status.score.into_inner(),
-                    );
-                }),
-            )
-        })
-        .min_by_key(|(_, score)| *score)
-        .unwrap();
+    let (plan, score) = optimizer.optimize(
+        &model,
+        Some(initial_plan.clone()),
+        iterations,
+        time_limit,
+        Some(&|status: OptProgress<Plan, NotNan<f64>>| {
+            callback(
+                status.solution.borrow().assignments.clone(),
+                -status.score.into_inner(),
+            );
+        }),
+    );
 
     (plan.assignments, -score.into_inner())
 }

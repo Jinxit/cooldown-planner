@@ -1,23 +1,22 @@
-use crate::store::{Connection, ConnectionHolder, Store};
-use crate::{Keyable, Storage};
-use axum::extract::FromRequestParts;
-use axum::http::request::Parts;
-use axum::Extension;
-use serde::de::DeserializeOwned;
-use serde::Serialize;
 use std::convert::Infallible;
 
-#[axum::async_trait]
-impl<K, V, S> FromRequestParts<S> for Storage<K, V>
+use axum::{async_trait, Extension};
+use axum::extract::FromRequestParts;
+use axum::http::request::Parts;
+
+use crate::Storage;
+use crate::store::{Connection, ConnectionHolder, Store};
+
+#[async_trait]
+impl<S> FromRequestParts<S> for Storage
 where
-    K: Keyable + 'static,
-    V: Serialize + DeserializeOwned + Send + Sync + 'static,
     S: Send + Sync,
 {
     type Rejection = Infallible;
 
     async fn from_request_parts(req: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
-        let connection_holder = req.extensions.get::<ConnectionHolder>().unwrap();
+        let extensions = &req.extensions;
+        let connection_holder = extensions.get::<ConnectionHolder>().unwrap();
         let store = Store::new(connection_holder);
         let storage = Storage::new(store);
 
